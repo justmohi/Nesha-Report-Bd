@@ -239,6 +239,7 @@ export const ReportPage: React.FC<ReportPageProps> = ({ onNavigate }) => {
           thanaName: language === 'bn' ? (curThana?.nameBn || '') : (curThana?.nameEn || ''),
           unionId: selectedUnionId,
           unionName: curUnion ? (language === 'bn' ? curUnion.nameBn : curUnion.nameEn) : '',
+          villageId: selectedVillageId || undefined,
           villageArea,
           roadLandmark,
         },
