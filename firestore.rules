@@ -113,8 +113,12 @@ service cloud.firestore {
       allow create: if isSignedIn() &&
         incoming().reporterId == request.auth.uid &&
         incoming().status == 'SUBMITTED' &&
-        incoming().keys().hasAll(['reportId', 'reporterId', 'incidentType', 'description', 'assignedThanaId', 'status', 'createdAt']) &&
-        incoming().reportId == reportId;
+        incoming().keys().hasAll(['reportId', 'reporterId', 'incidentType', 'description', 'jurisdiction', 'assignedThanaId', 'status', 'createdAt']) &&
+        incoming().reportId == reportId &&
+        incoming().jurisdiction.thanaId == incoming().assignedThanaId &&
+        incoming().jurisdiction.districtId is string &&
+        incoming().jurisdiction.upazilaId is string &&
+        incoming().jurisdiction.thanaId is string;
 
       // Update actions:
       // Police can update status and investigation notes for their assigned Thana
