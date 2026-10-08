@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useLanguage } from '../../context/LanguageContext';
-import { PublicStatistics, IncidentCategory } from '../../types';
+import { PublicStatistics, IncidentCategory, HomeBanner } from '../../types';
 import { dataService } from '../../services/dataService';
 import {
   Shield, FileText, Search, Lock, CheckCircle2, HeartHandshake,
@@ -12,8 +12,23 @@ interface HomePageProps { onNavigate: (tab: string) => void; }
 export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
   const { t, language } = useLanguage();
   const [stats, setStats] = useState<PublicStatistics | null>(null);
+  const [banners, setBanners] = useState<HomeBanner[]>([]);
+  const [activeSlide, setActiveSlide] = useState(0);
 
-  useEffect(() => { dataService.getPublicStatistics().then(setStats); }, []);
+  useEffect(() => {
+    Promise.all([dataService.getPublicStatistics(), dataService.getHomeBanners()])
+      .then(([statistics, slides]) => { setStats(statistics); setBanners(slides); });
+  }, []);
+
+  useEffect(() => {
+    if (banners.length < 2) return;
+    const timer = window.setInterval(() => setActiveSlide((current) => (current + 1) % banners.length), 5000);
+    return () => window.clearInterval(timer);
+  }, [banners.length]);
+
+  useEffect(() => {
+    if (activeSlide >= banners.length && banners.length) setActiveSlide(0);
+  }, [activeSlide, banners.length]);
 
   const categories: { key: IncidentCategory; titleBn: string; titleEn: string; descBn: string; descEn: string; icon: React.ReactNode }[] = [
     { key: 'YABA', titleBn: 'ইয়াবা / মেথাম্ফেটামিন', titleEn: 'Yaba / Methamphetamine', descBn: 'নিষিদ্ধ ট্যাবলেটের লেনদেন, সংরক্ষণ বা সরবরাহ সংক্রান্ত তথ্য।', descEn: 'Information about suspected distribution or possession of illicit tablets.', icon: <Shield className="w-5 h-5" /> },
@@ -27,35 +42,43 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
   return (
     <div className="bg-slate-50">
       <section className="bg-white border-b border-slate-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="rounded-lg overflow-hidden border border-slate-200 bg-gradient-to-r from-[#006a4e] to-[#008b68] text-white">
-            <div className="px-6 sm:px-10 lg:px-14 py-10 lg:py-14 grid lg:grid-cols-[1.5fr_0.8fr] gap-8 items-center">
-              <div>
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/20 text-xs font-semibold mb-5">
-                  <Shield className="w-4 h-4" /> {t('brandBadge')}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          {banners.length ? (
+            <div className="relative overflow-hidden rounded-xl border border-slate-200 bg-slate-900 shadow-sm">
+              {banners.map((banner,index) => (
+                <div key={banner.id} className={`absolute inset-0 transition-opacity duration-700 ${index===activeSlide?'opacity-100':'opacity-0 pointer-events-none'}`}>
+                  <img src={banner.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover" />
+                  <div className="absolute inset-0 bg-gradient-to-r from-black/75 via-black/45 to-black/10" />
+                  <div className="relative min-h-[300px] sm:min-h-[390px] lg:min-h-[430px] flex items-center px-6 sm:px-10 lg:px-14 py-10">
+                    <div className="max-w-2xl text-white">
+                      <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/20 text-xs font-semibold mb-5"><Shield className="w-4 h-4"/> {t('brandBadge')}</div>
+                      <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold leading-tight">{language==='bn'?banner.titleBn:banner.titleEn}</h1>
+                      {(language==='bn'?banner.subtitleBn:banner.subtitleEn) && <p className="mt-4 text-sm sm:text-base text-white/85 max-w-xl leading-relaxed">{language==='bn'?banner.subtitleBn:banner.subtitleEn}</p>}
+                      {(language==='bn'?banner.buttonLabelBn:banner.buttonLabelEn) && <button onClick={()=>onNavigate(banner.buttonTab||'report')} className="mt-6 inline-flex items-center gap-2 px-5 py-3 rounded-md bg-white text-[#006a4e] font-bold text-sm hover:bg-emerald-50 transition">{language==='bn'?banner.buttonLabelBn:banner.buttonLabelEn}<ArrowRight className="w-4 h-4"/></button>}
+                    </div>
+                  </div>
                 </div>
-                <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold leading-tight">{t('heroTitle')}</h1>
-                <p className="mt-4 text-sm sm:text-base text-emerald-50 max-w-2xl leading-relaxed">{t('heroSubtitle')}</p>
-                <div className="mt-7 flex flex-wrap gap-3">
-                  <button onClick={() => onNavigate('report')} className="inline-flex items-center gap-2 px-5 py-3 rounded-md bg-white text-[#006a4e] font-bold text-sm hover:bg-emerald-50 transition">
-                    <FileText className="w-4 h-4" /> {t('heroBtnReport')}
-                  </button>
-                  <button onClick={() => onNavigate('track')} className="inline-flex items-center gap-2 px-5 py-3 rounded-md bg-transparent border border-white/50 text-white font-semibold text-sm hover:bg-white/10 transition">
-                    <Search className="w-4 h-4" /> {t('heroBtnTrack')}
-                  </button>
-                </div>
-              </div>
-              <div className="hidden lg:block">
-                <div className="bg-white/10 border border-white/20 rounded-lg p-5">
-                  <div className="text-xs uppercase tracking-wider text-emerald-100 font-semibold mb-3">{language === 'bn' ? 'নিরাপত্তা ও গোপনীয়তা' : 'Security & Privacy'}</div>
-                  <div className="flex gap-3 items-start">
-                    <div className="w-10 h-10 rounded-md bg-white text-[#006a4e] flex items-center justify-center"><Lock className="w-5 h-5" /></div>
-                    <p className="text-sm text-white/90 leading-relaxed">{t('privacyNoticeDesc')}</p>
+              ))}
+              <div className="relative min-h-[300px] sm:min-h-[390px] lg:min-h-[430px] pointer-events-none" />
+              {banners.length>1 && <div className="absolute bottom-5 left-1/2 -translate-x-1/2 flex gap-2">
+                {banners.map((banner,index)=><button key={banner.id} onClick={()=>setActiveSlide(index)} className={`pointer-events-auto h-2 rounded-full transition-all ${index===activeSlide?'w-7 bg-white':'w-2 bg-white/50'}`} aria-label={`Go to slide ${index+1}`}/>)}
+              </div>}
+            </div>
+          ) : (
+            <div className="rounded-xl border border-slate-200 bg-gradient-to-r from-[#006a4e] to-[#008b68] text-white">
+              <div className="px-6 sm:px-10 lg:px-14 py-10 lg:py-14">
+                <div className="max-w-3xl">
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/20 text-xs font-semibold mb-5"><Shield className="w-4 h-4"/> {t('brandBadge')}</div>
+                  <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold leading-tight">{t('heroTitle')}</h1>
+                  <p className="mt-4 text-sm sm:text-base text-emerald-50 leading-relaxed">{t('heroSubtitle')}</p>
+                  <div className="mt-7 flex flex-wrap gap-3">
+                    <button onClick={()=>onNavigate('report')} className="inline-flex items-center gap-2 px-5 py-3 rounded-md bg-white text-[#006a4e] font-bold text-sm"><FileText className="w-4 h-4"/> {t('heroBtnReport')}</button>
+                    <button onClick={()=>onNavigate('track')} className="inline-flex items-center gap-2 px-5 py-3 rounded-md border border-white/50 text-white font-semibold text-sm"><Search className="w-4 h-4"/> {t('heroBtnTrack')}</button>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
+          )}
         </div>
       </section>
 
