@@ -1,14 +1,17 @@
-import{Report,ReportedPerson,Evidence,AuditLog,NotificationItem,PoliceUser,District,Upazila,Thana,UnionItem,PublicStatistics,ReportStatus,UserRole}from'../types';
-import{INITIAL_DISTRICTS,INITIAL_UPAZILAS,INITIAL_THANAS,INITIAL_UNIONS}from'./mockData';
+import{Report,ReportedPerson,Evidence,AuditLog,NotificationItem,PoliceUser,District,Upazila,Thana,UnionItem,VillageItem,PublicStatistics,ReportStatus,UserRole}from'../types';
+import{DEMO_PUBLIC_STATS}from'./mockData';
 import{db,isFirebaseConfigured,auth}from'../lib/firebase';
 import{collection,doc,getDoc,getDocs,setDoc,updateDoc,query,where,orderBy,limit}from'firebase/firestore';
+import{getDistricts as geoDistricts,getDivisions as geoDivisions,getUpazilas as geoUpazilas,getAreas as geoAreas,getVillages as geoVillages}from'@olism/bd-geo';
+const slug=(v:string)=>v.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
 
 class DataService{
  private ready(){if(!isFirebaseConfigured||!db)throw new Error('Firebase is not configured.');return db}
- async getDistricts():Promise<District[]>{return INITIAL_DISTRICTS}
- async getUpazilas(d?:string):Promise<Upazila[]>{return d?INITIAL_UPAZILAS.filter(x=>x.districtId===d):INITIAL_UPAZILAS}
- async getThanas(u?:string,d?:string):Promise<Thana[]>{return INITIAL_THANAS.filter(x=>(!u||x.upazilaId===u)&&(!d||x.districtId===d))}
- async getUnions(t?:string):Promise<UnionItem[]>{return t?INITIAL_UNIONS.filter(x=>x.thanaId===t):INITIAL_UNIONS}
+ async getDistricts():Promise<District[]>{const divs=geoDivisions() as any[];return(geoDistricts() as any[]).map(d=>{const v=divs.find(x=>x.id===d.divisionId);return{id:`dist_${d.id}`,nameEn:d.name,nameBn:d.nameBn,division:v?.name||''}})}
+ async getUpazilas(d?:string):Promise<Upazila[]>{const districtId=d?Number(d.replace('dist_','')):undefined;return(geoUpazilas() as any[]).filter(u=>districtId==null||u.districtId===districtId).map(u=>({id:`upz_${u.id}`,districtId:`dist_${u.districtId}`,nameEn:u.name,nameBn:u.nameBn}))}
+ async getThanas(u?:string,d?:string):Promise<Thana[]>{const upazilaId=u?Number(u.replace('upz_','')):undefined;const districtId=d?Number(d.replace('dist_','')):undefined;return(geoUpazilas() as any[]).filter(x=>(upazilaId==null||x.id===upazilaId)&&(districtId==null||x.districtId===districtId)).map(x=>({id:`thana_${x.id}`,upazilaId:`upz_${x.id}`,districtId:`dist_${x.districtId}`,nameEn:x.name,nameBn:x.nameBn,code:String(x.id)}))}
+ async getUnions(t?:string):Promise<UnionItem[]>{const upazilaId=t?Number(t.replace('thana_','')):undefined;return(geoAreas() as any[]).filter(a=>a.type==='union'&&(upazilaId==null||a.upazilaId===upazilaId)).map(a=>({id:`union_${a.id}`,thanaId:`thana_${a.upazilaId}`,nameEn:a.name,nameBn:a.nameBn}))}
+ async getVillages(u?:string):Promise<VillageItem[]>{const unionId=u?Number(u.replace('union_','')):undefined;return(geoVillages() as any[]).filter(v=>unionId==null||v.areaId===unionId).map(v=>({id:`village_${v.id}`,unionId:`union_${v.areaId}`,nameEn:v.name,nameBn:v.nameBn}))}
 
  async getReports(role:UserRole,uid:string,thana?:string):Promise<Report[]>{const db=this.ready();let q:any;if(role==='SUPER_ADMIN')q=query(collection(db,'reports'),limit(500));else if(role==='POLICE_USER'&&thana)q=query(collection(db,'reports'),where('assignedThanaId','==',thana),limit(500));else q=query(collection(db,'reports'),where('reporterId','==',uid),limit(500));const s=await getDocs(q);return s.docs.map(d=>d.data()as Report).sort((a,b)=>b.createdAt.localeCompare(a.createdAt))}
  async getReportById(id:string,role:UserRole,uid:string,thana?:string):Promise<Report|null>{const db=this.ready();let s=await getDoc(doc(db,'reports',id));if(!s.exists()){const q=query(collection(db,'reports'),where('reportId','==',id),limit(1));const a=await getDocs(q);if(a.empty)return null;s=a.docs[0]}const r=s.data()as Report;if(role==='SUPER_ADMIN'||(role==='PUBLIC_USER'&&r.reporterId===uid)||(role==='POLICE_USER'&&r.assignedThanaId===thana))return r;throw new Error('Unauthorized access to report')}
