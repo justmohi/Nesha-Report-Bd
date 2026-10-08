@@ -1,14 +1,1 @@
-import { Router, Request, Response } from 'express';
-
-const router = Router();
-
-router.get('/', (req: Request, res: Response) => {
-  const { thanaId, userId } = req.query;
-  res.json({
-    success: true,
-    notifications: [],
-    message: `Station notifications query for thana: ${thanaId || 'all'}, user: ${userId || 'all'}`,
-  });
-});
-
-export default router;
+import{Router,Request,Response}from'express';import{getFirestore}from'firebase-admin/firestore';const router=Router();router.get('/',async(req:Request,res:Response)=>{try{const u=req.user!;const db=getFirestore();let q:any;if(u.role==='POLICE_USER')q=db.collection('notifications').where('targetThanaId','==',u.assignedThanaId);else if(u.role==='SUPER_ADMIN')q=db.collection('notifications');else q=db.collection('notifications').where('recipientId','==',u.uid);const s=await q.limit(200).get();return res.json({success:true,notifications:s.docs.map((d:any)=>d.data())})}catch(e:any){return res.status(500).json({error:e.message||'Failed to load notifications'})}});export default router;
