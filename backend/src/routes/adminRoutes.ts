@@ -39,15 +39,6 @@ router.post('/police-users', requireRoles('SUPER_ADMIN'), async (req: Request, r
     const auth = getAuth();
     const db = getFirestore();
 
-    // Validate the jurisdiction relationship server-side; the admin UI is not trusted.
-    const thanaSnap = await db.doc(`policeStations/${values.assignedThanaId}`).get();
-    if (thanaSnap.exists) {
-      const thana = thanaSnap.data() as any;
-      if (thana.districtId && thana.districtId !== values.assignedDistrictId) {
-        return res.status(400).json({ error: 'Assigned Thana does not belong to the selected district.' });
-      }
-    }
-
     const duplicateBadge = await db.collection('policeUsers').where('badgeNumber', '==', values.badgeNumber).limit(1).get();
     if (!duplicateBadge.empty) {
       return res.status(409).json({ error: 'A police account with this badge number already exists.' });
