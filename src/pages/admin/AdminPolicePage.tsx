@@ -30,7 +30,7 @@ export const AdminPolicePage: React.FC = () => {
   const [assignedDistrictId, setAssignedDistrictId] = useState<string>('dist_dhaka');
   const [assignedThanaId, setAssignedThanaId] = useState<string>('thana_gulshan');
   const [email, setEmail] = useState<string>('');
-  const [password, setPassword] = useState<string>('police123');
+  const [password, setPassword] = useState<string>('');
 
   useEffect(() => {
     dataService.getPoliceUsers().then(setOfficers);
@@ -60,6 +60,7 @@ export const AdminPolicePage: React.FC = () => {
       thanaNameBn: selThana?.nameBn || 'থানা',
       thanaNameEn: selThana?.nameEn || 'Thana',
       email,
+      password,
       isActive: true,
     });
 
@@ -69,6 +70,7 @@ export const AdminPolicePage: React.FC = () => {
     setFullName('');
     setBadgeNumber('');
     setEmail('');
+    setPassword('');
   };
 
   return (
@@ -251,6 +253,21 @@ export const AdminPolicePage: React.FC = () => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="police.thana@police.gov.bd"
+                  className="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-slate-100 text-xs focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-slate-300 font-semibold mb-1">
+                  {language === 'bn' ? 'পাসওয়ার্ড' : 'Password'} *
+                </label>
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  minLength={8}
+                  placeholder={language === 'bn' ? 'কমপক্ষে ৮ অক্ষর' : 'Minimum 8 characters'}
                   className="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-slate-100 text-xs focus:outline-none focus:ring-2 focus:ring-purple-500"
                   required
                 />
