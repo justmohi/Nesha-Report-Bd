@@ -39,10 +39,10 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate }) => {
 
     try {
       if (activeTab === 'PUBLIC') {
-        await loginAsPublic(email, 'নাগরিক ব্যবহারকারী');
+        await loginAsPublic(email, password);
         onNavigate('my-reports');
       } else if (activeTab === 'POLICE') {
-        const success = await loginAsPolice(email);
+        const success = await loginAsPolice(email, password);
         if (success) {
           onNavigate('police-dashboard');
         } else {
@@ -53,7 +53,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate }) => {
           );
         }
       } else if (activeTab === 'ADMIN') {
-        await loginAsAdmin(email);
+        await loginAsAdmin(email, password);
         onNavigate('admin-dashboard');
       }
     } catch (err: any) {
@@ -116,14 +116,6 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate }) => {
           >
             {language === 'bn' ? 'নাগরিক' : 'Citizen'}
           </button>
-        </div>
-
-        {/* Demo Credentials Chip */}
-        <div className="p-3 rounded-xl bg-slate-800/40 border border-slate-800 text-xs flex items-center justify-between">
-          <span className="text-slate-400 font-mono truncate">{email}</span>
-          <span className="text-[10px] uppercase font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
-            Demo Ready
-          </span>
         </div>
 
         {error && (
