@@ -4,12 +4,13 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "tsx server.ts",
-    "build": "vite build",
+    "dev": "npm run prepare:geo && tsx server.ts",
+    "build": "npm run prepare:geo && vite build",
     "start": "tsx server.ts",
     "preview": "vite preview",
     "clean": "rm -rf dist server.js",
-    "lint": "tsc --noEmit"
+    "lint": "tsc --noEmit",
+    "prepare:geo": "node scripts/prepare-bd-geo.mjs"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",
