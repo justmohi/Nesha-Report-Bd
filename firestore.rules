@@ -26,7 +26,7 @@ service cloud.firestore {
 
     // Check if user is registered Super Admin
     function isAdmin() {
-      return isSignedIn() && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+      return isSignedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid)) && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'SUPER_ADMIN';
     }
 
     // Retrieve officer record for current user
@@ -96,11 +96,7 @@ service cloud.firestore {
       );
 
       // Query listings enforced by security rules
-      allow list: if isSignedIn() && (
-        (resource.data.reporterId == request.auth.uid) ||
-        (isPolice() && resource.data.assignedThanaId == getPoliceDoc().assignedThanaId) ||
-        isAdmin()
-      );
+      allow list: if isAdmin() || (isSignedIn() && resource.data.reporterId == request.auth.uid) || (isPolice() && resource.data.assignedThanaId == getPoliceDoc().assignedThanaId);
 
       // Creation by authenticated citizen
       allow create: if isSignedIn() &&
@@ -164,15 +160,9 @@ service cloud.firestore {
         )
       );
 
-      allow list: if isSignedIn() && (
-        resource.data.uploadedBy == request.auth.uid ||
-        isAdmin() ||
-        isPolice()
-      );
+      allow list: if isAdmin() || (isSignedIn() && resource.data.uploadedBy == request.auth.uid);
 
-      allow create: if isSignedIn() &&
-        incoming().uploadedBy == request.auth.uid &&
-        incoming().evidenceId == evidenceId;
+      allow create: if isSignedIn() && incoming().uploadedBy == request.auth.uid && incoming().evidenceId == evidenceId && exists(/databases/$(database)/documents/reports/$(incoming().reportId)) && (isAdmin() || get(/databases/$(database)/documents/reports/$(incoming().reportId)).data.reporterId == request.auth.uid || (isPolice() && get(/databases/$(database)/documents/reports/$(incoming().reportId)).data.assignedThanaId == getPoliceDoc().assignedThanaId));
 
       allow update: if isAdmin();
       allow delete: if isAdmin() || (isSignedIn() && existing().uploadedBy == request.auth.uid);
