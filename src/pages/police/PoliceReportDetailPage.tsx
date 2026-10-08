@@ -54,15 +54,18 @@ export const PoliceReportDetailPage: React.FC<PoliceReportDetailPageProps> = ({
   // Evidence preview modal
   const [selectedEvidencePreview, setSelectedEvidencePreview] = useState<Evidence | null>(null);
 
-  const thanaId = policeUser?.assignedThanaId || 'thana_gulshan';
+  const thanaId = policeUser?.assignedThanaId;
 
   useEffect(() => {
     const load = async () => {
       setIsLoading(true);
       setError(null);
       try {
-        const uid = currentUser?.uid || 'police_gulshan_01';
-        const rep = await dataService.getReportById(reportId, 'POLICE_USER', uid, thanaId);
+        if (!currentUser || !policeUser?.assignedThanaId) {
+          throw new Error('Unauthorized: active police assignment is required.');
+        }
+        const uid = currentUser.uid;
+        const rep = await dataService.getReportById(reportId, 'POLICE_USER', uid, policeUser.assignedThanaId);
 
         if (!rep) {
           setError('Report not found');
@@ -86,7 +89,7 @@ export const PoliceReportDetailPage: React.FC<PoliceReportDetailPageProps> = ({
 
         // Fetch evidence
         try {
-          const ev = await dataService.getEvidenceForReport(rep.id, 'POLICE_USER', uid, thanaId);
+          const ev = await dataService.getEvidenceForReport(rep.id, 'POLICE_USER', uid, policeUser.assignedThanaId);
           setEvidenceList(ev);
         } catch (e) {
           console.warn('Could not load evidence', e);
@@ -98,7 +101,7 @@ export const PoliceReportDetailPage: React.FC<PoliceReportDetailPageProps> = ({
       }
     };
     load();
-  }, [reportId, thanaId, currentUser]);
+  }, [reportId, thanaId, currentUser, policeUser]);
 
   const handleUpdateStatusAndNotes = async (statusToSet: ReportStatus) => {
     if (!report || !policeUser) return;
