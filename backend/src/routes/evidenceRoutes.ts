@@ -100,8 +100,32 @@ router.post('/upload', (req: Request, res: Response, next) => {
         : 'Telegram storage is not configured yet. Metadata retained locally.',
     };
 
-    await getFirestore().doc(`evidence/${evidenceId}`).set({ id:evidenceId, ...evidenceRecord });
-    await getFirestore().doc(`reports/${reportId}`).update({ evidenceIds: [...new Set([...(report.evidenceIds || []), evidenceId])], updatedAt: new Date().toISOString() });
+    const db = getFirestore();
+    try {
+      await db.runTransaction(async (tx) => {
+        const reportRef = db.doc(`reports/${reportId}`);
+        const currentReport = await tx.get(reportRef);
+        if (!currentReport.exists) throw new Error('Report not found');
+        const currentData = currentReport.data() as any;
+        if (user.role === 'POLICE_USER' && currentData.assignedThanaId !== user.assignedThanaId) {
+          throw new Error('Report is outside your assigned Thana');
+        }
+        const evidenceRef = db.doc(`evidence/${evidenceId}`);
+        const evidenceIds = Array.from(new Set([...(currentData.evidenceIds || []), evidenceId]));
+        const updatedAt = new Date().toISOString();
+        tx.set(evidenceRef, { id: evidenceId, ...evidenceRecord });
+        tx.update(reportRef, { evidenceIds, updatedAt });
+      });
+    } catch (storageError) {
+      if (telegramResult?.messageId && telegramService.isConfigured()) {
+        try {
+          await telegramService.deleteMessage(Number(telegramResult.messageId));
+        } catch (cleanupError) {
+          console.warn('Telegram orphan cleanup warning:', cleanupError);
+        }
+      }
+      throw storageError;
+    }
     return res.status(201).json({ success: true, evidence: evidenceRecord });
   } catch (error: any) {
     console.error('Evidence upload error:', error);
