@@ -38,3 +38,4 @@ export interface Thana { id:string; upazilaId?:string; districtId:string; nameEn
 export interface UnionItem { id:string; upazilaId:string; nameEn:string; nameBn:string; }
 export interface VillageItem { id:string; unionId:string; nameEn:string; nameBn:string; }
 export interface PublicStatistics { totalReports:number; underReview:number; verifiedIncidents:number; actionTaken:number; areasCovered:number; categoryDistribution:{category:IncidentCategory;nameBn:string;nameEn:string;count:number;}[]; monthlyTrends:{month:string;count:number;}[]; }
+export interface HomeBanner { id:string; imageUrl:string; titleBn:string; titleEn:string; subtitleBn?:string; subtitleEn?:string; buttonLabelBn?:string; buttonLabelEn?:string; buttonTab?:string; order:number; isActive:boolean; updatedAt:string; }
