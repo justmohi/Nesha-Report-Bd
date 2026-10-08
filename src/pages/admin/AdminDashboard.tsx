@@ -78,6 +78,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
 
         <div className="flex flex-wrap items-center gap-2">
           <button
+            onClick={() => onNavigate('admin-banners')}
+            className="px-4 py-2.5 rounded-xl bg-[#006a4e] hover:bg-[#00563f] text-white font-semibold text-xs sm:text-sm transition flex items-center gap-1.5"
+          >
+            <Layers className="w-4 h-4" />
+            <span>{language === 'bn' ? 'হোম ব্যানার' : 'Home Banners'}</span>
+          </button>
+          <button
             onClick={() => onNavigate('admin-police')}
             className="px-4 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-semibold text-xs sm:text-sm transition flex items-center gap-1.5"
           >
