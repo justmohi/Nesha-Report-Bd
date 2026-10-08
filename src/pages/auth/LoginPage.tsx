@@ -12,8 +12,8 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate }) => {
   const { loginAsPublic, loginAsPolice, loginAsAdmin } = useAuth();
 
   const [activeTab, setActiveTab] = useState<'PUBLIC' | 'POLICE' | 'ADMIN'>('POLICE');
-  const [email, setEmail] = useState<string>('police.gulshan@police.gov.bd');
-  const [password, setPassword] = useState<string>('police123');
+  const [email, setEmail] = useState<string>('');
+  const [password, setPassword] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -21,14 +21,14 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate }) => {
     setActiveTab(tab);
     setError(null);
     if (tab === 'PUBLIC') {
-      setEmail('citizen@example.com');
-      setPassword('citizen123');
+      setEmail('');
+      setPassword('');
     } else if (tab === 'POLICE') {
-      setEmail('police.gulshan@police.gov.bd');
-      setPassword('police123');
+      setEmail('');
+      setPassword('');
     } else if (tab === 'ADMIN') {
-      setEmail('admin@neshareportbd.gov.bd');
-      setPassword('admin123');
+      setEmail('');
+      setPassword('');
     }
   };
 
