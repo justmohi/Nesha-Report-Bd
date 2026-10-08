@@ -30,15 +30,20 @@ export const PoliceDashboard: React.FC<PoliceDashboardProps> = ({ onNavigate }) 
   const [reports, setReports] = useState<Report[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  const thanaId = policeUser?.assignedThanaId || 'thana_gulshan';
-  const thanaName = policeUser ? (language === 'bn' ? policeUser.thanaNameBn : policeUser.thanaNameEn) : 'গুলশান থানা';
+  const thanaId = policeUser?.assignedThanaId;
+  const thanaName = policeUser
+    ? (language === 'bn' ? policeUser.thanaNameBn : policeUser.thanaNameEn)
+    : '';
 
   useEffect(() => {
     const load = async () => {
       setIsLoading(true);
       try {
-        const uid = currentUser?.uid || 'police_gulshan_01';
-        const list = await dataService.getReports('POLICE_USER', uid, thanaId);
+        if (!currentUser || !policeUser?.assignedThanaId) {
+          setReports([]);
+          return;
+        }
+        const list = await dataService.getReports('POLICE_USER', currentUser.uid, policeUser.assignedThanaId);
         setReports(list);
       } catch (e) {
         console.error('Failed to load police dashboard reports', e);
@@ -47,7 +52,7 @@ export const PoliceDashboard: React.FC<PoliceDashboardProps> = ({ onNavigate }) 
       }
     };
     load();
-  }, [thanaId, currentUser]);
+  }, [thanaId, currentUser, policeUser]);
 
   const totalCount = reports.length;
   const newCount = reports.filter((r) => r.status === 'SUBMITTED').length;
