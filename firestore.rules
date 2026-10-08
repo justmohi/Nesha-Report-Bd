@@ -154,8 +154,23 @@ service cloud.firestore {
       allow list: if isAdmin();
 
       allow create: if isSignedIn() &&
-        exists(/databases/$(database)/documents/reports/$(incoming().reportId)) &&
-        get(/databases/$(database)/documents/reports/$(incoming().reportId)).data.reporterId == request.auth.uid;
+        incoming().keys().hasAll(['id', 'personId', 'reportId', 'createdAt']) &&
+        incoming().keys().hasOnly(['id', 'personId', 'reportId', 'name', 'alias', 'approximateAge', 'gender', 'description', 'knownArea', 'additionalNotes', 'photoEvidenceId', 'createdAt']) &&
+        incoming().id == personId &&
+        incoming().personId == personId &&
+        incoming().reportId is string &&
+        incoming().createdAt is string &&
+        (!incoming().keys().hasAny(['name']) || (incoming().name is string && incoming().name.size() <= 200)) &&
+        (!incoming().keys().hasAny(['alias']) || (incoming().alias is string && incoming().alias.size() <= 200)) &&
+        (!incoming().keys().hasAny(['approximateAge']) || (incoming().approximateAge is int && incoming().approximateAge >= 0 && incoming().approximateAge <= 120)) &&
+        (!incoming().keys().hasAny(['gender']) || (incoming().gender is string && incoming().gender.size() <= 50)) &&
+        (!incoming().keys().hasAny(['description']) || (incoming().description is string && incoming().description.size() <= 5000)) &&
+        (!incoming().keys().hasAny(['knownArea']) || (incoming().knownArea is string && incoming().knownArea.size() <= 500)) &&
+        (!incoming().keys().hasAny(['additionalNotes']) || (incoming().additionalNotes is string && incoming().additionalNotes.size() <= 5000)) &&
+        (!incoming().keys().hasAny(['photoEvidenceId']) || (incoming().photoEvidenceId is string && incoming().photoEvidenceId.size() <= 128)) &&
+        getAfter(/databases/$(database)/documents/reports/$(incoming().reportId)).data.reporterId == request.auth.uid &&
+        getAfter(/databases/$(database)/documents/reports/$(incoming().reportId)).data.reportedPersonId == personId &&
+        getAfter(/databases/$(database)/documents/reports/$(incoming().reportId)).data.hasReportedPerson == true;
 
       allow update: if isAdmin();
       allow delete: if isAdmin();
