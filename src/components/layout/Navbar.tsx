@@ -13,6 +13,7 @@ import {
   X,
   LogOut,
   ChevronDown,
+  UserCheck,
   Building2,
   Lock,
   Layers,
@@ -25,11 +26,10 @@ interface NavbarProps {
 }
 
 export const Navbar: React.FC<NavbarProps> = ({ currentTab, onNavigate }) => {
-  const { currentUser, policeUser, role, logout, switchDemoRole } = useAuth();
+  const { currentUser, policeUser, role, logout } = useAuth();
   const { t, language } = useLanguage();
   const { unreadCount } = useNotifications();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [roleDropdownOpen, setRoleDropdownOpen] = useState(false);
 
   const handleNav = (tab: string) => {
     onNavigate(tab);
@@ -47,9 +47,9 @@ export const Navbar: React.FC<NavbarProps> = ({ currentTab, onNavigate }) => {
   };
 
   return (
-    <header className="sticky top-0 z-50 bg-slate-900/95 backdrop-blur-md border-b border-slate-800">
+    <header className="sticky top-0 z-50 bg-white border-b border-slate-200 shadow-sm">
       {/* Top Banner Notice */}
-      <div className="bg-emerald-950/70 border-b border-emerald-900/40 px-4 py-1 text-xs text-emerald-300/90 flex flex-wrap items-center justify-between gap-2">
+      <div className="bg-[#006a4e] border-b border-[#00563f] px-4 py-1 text-xs text-white flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2 max-w-4xl mx-auto w-full justify-between">
           <span className="flex items-center gap-1.5 font-medium">
             <Lock className="w-3.5 h-3.5 text-emerald-400" />
@@ -216,97 +216,34 @@ export const Navbar: React.FC<NavbarProps> = ({ currentTab, onNavigate }) => {
               </button>
             )}
 
-            {/* Quick Demo Role Switcher Dropdown */}
-            <div className="relative">
+            {/* Authenticated role / login control — no demo role switching */}
+            {currentUser ? (
+              <div className="hidden sm:flex items-center gap-2">
+                <button
+                  onClick={() => onNavigate(role === 'POLICE_USER' ? 'police-dashboard' : role === 'SUPER_ADMIN' ? 'admin-dashboard' : 'my-reports')}
+                  className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-50 hover:bg-slate-100 border border-slate-200 text-xs font-semibold text-slate-700 transition"
+                >
+                  <span className={`w-2 h-2 rounded-full ${role === 'SUPER_ADMIN' ? 'bg-purple-500' : role === 'POLICE_USER' ? 'bg-blue-500' : 'bg-emerald-500'}`} />
+                  <span className="max-w-[140px] truncate">{getRoleDisplayName()}</span>
+                  <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
+                </button>
+                <button
+                  onClick={() => logout()}
+                  className="p-2 rounded-lg text-slate-500 hover:text-red-600 hover:bg-red-50 transition"
+                  title={language === 'bn' ? 'লগআউট' : 'Logout'}
+                >
+                  <LogOut className="w-4 h-4" />
+                </button>
+              </div>
+            ) : (
               <button
-                onClick={() => setRoleDropdownOpen(!roleDropdownOpen)}
-                className="hidden sm:inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-800/90 hover:bg-slate-700 border border-slate-700/80 text-xs font-medium text-slate-200 transition"
+                onClick={() => onNavigate('login')}
+                className="hidden sm:inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white hover:bg-slate-50 border border-slate-300 text-xs font-semibold text-slate-700 transition"
               >
-                <span
-                  className={`w-2 h-2 rounded-full ${
-                    role === 'SUPER_ADMIN'
-                      ? 'bg-purple-400'
-                      : role === 'POLICE_USER'
-                      ? 'bg-blue-400'
-                      : 'bg-emerald-400'
-                  }`}
-                />
-                <span className="max-w-[120px] truncate">{getRoleDisplayName()}</span>
-                <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
+                <UserCheck className="w-4 h-4 text-[#006a4e]" />
+                {language === 'bn' ? 'লগইন / নিবন্ধন' : 'Login / Register'}
               </button>
-
-              {roleDropdownOpen && (
-                <div className="absolute right-0 mt-2 w-64 rounded-xl bg-slate-900 border border-slate-700 shadow-2xl p-2 z-50">
-                  <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 px-3 py-1.5 border-b border-slate-800">
-                    {language === 'bn' ? 'ভূমিকা পরিবর্তন (পরীক্ষণের জন্য)' : 'Switch Role (For Testing)'}
-                  </div>
-
-                  <button
-                    onClick={() => {
-                      switchDemoRole('PUBLIC_USER');
-                      setRoleDropdownOpen(false);
-                      onNavigate('home');
-                    }}
-                    className={`w-full text-left px-3 py-2 rounded-lg text-xs font-medium flex items-center justify-between ${
-                      role === 'PUBLIC_USER'
-                        ? 'bg-emerald-500/20 text-emerald-300'
-                        : 'text-slate-300 hover:bg-slate-800'
-                    }`}
-                  >
-                    <span>{language === 'bn' ? 'সাধারণ নাগরিক' : 'Citizen Reporter'}</span>
-                    <span className="text-[10px] text-slate-400">Tanvir</span>
-                  </button>
-
-                  <button
-                    onClick={() => {
-                      switchDemoRole('POLICE_USER', 'thana_gulshan');
-                      setRoleDropdownOpen(false);
-                      onNavigate('police-dashboard');
-                    }}
-                    className={`w-full text-left px-3 py-2 rounded-lg text-xs font-medium flex items-center justify-between ${
-                      role === 'POLICE_USER' && policeUser?.assignedThanaId === 'thana_gulshan'
-                        ? 'bg-blue-500/20 text-blue-300'
-                        : 'text-slate-300 hover:bg-slate-800'
-                    }`}
-                  >
-                    <span>{language === 'bn' ? 'গুলশান থানা পুলিশ' : 'Gulshan Police (SI Rafiq)'}</span>
-                    <span className="text-[10px] text-blue-400">Thana 01</span>
-                  </button>
-
-                  <button
-                    onClick={() => {
-                      switchDemoRole('POLICE_USER', 'thana_kotwali_ctg');
-                      setRoleDropdownOpen(false);
-                      onNavigate('police-dashboard');
-                    }}
-                    className={`w-full text-left px-3 py-2 rounded-lg text-xs font-medium flex items-center justify-between ${
-                      role === 'POLICE_USER' && policeUser?.assignedThanaId === 'thana_kotwali_ctg'
-                        ? 'bg-blue-500/20 text-blue-300'
-                        : 'text-slate-300 hover:bg-slate-800'
-                    }`}
-                  >
-                    <span>{language === 'bn' ? 'কোতোয়ালী থানা (চট্টগ্রাম)' : 'Kotwali Police (CTG)'}</span>
-                    <span className="text-[10px] text-blue-400">Thana 02</span>
-                  </button>
-
-                  <button
-                    onClick={() => {
-                      switchDemoRole('SUPER_ADMIN');
-                      setRoleDropdownOpen(false);
-                      onNavigate('admin-dashboard');
-                    }}
-                    className={`w-full text-left px-3 py-2 rounded-lg text-xs font-medium flex items-center justify-between ${
-                      role === 'SUPER_ADMIN'
-                        ? 'bg-purple-500/20 text-purple-300'
-                        : 'text-slate-300 hover:bg-slate-800'
-                    }`}
-                  >
-                    <span>{language === 'bn' ? 'সুপার অ্যাডমিন' : 'Super Admin'}</span>
-                    <span className="text-[10px] text-purple-400">National</span>
-                  </button>
-                </div>
-              )}
-            </div>
+            )}
 
             {/* Mobile Menu Button */}
             <button
@@ -321,7 +258,7 @@ export const Navbar: React.FC<NavbarProps> = ({ currentTab, onNavigate }) => {
 
       {/* Mobile Drawer */}
       {mobileMenuOpen && (
-        <div className="lg:hidden border-t border-slate-800 bg-slate-900/98 px-4 pt-3 pb-6 space-y-2">
+        <div className="lg:hidden border-t border-slate-200 bg-slate-900/98 px-4 pt-3 pb-6 space-y-2">
           <button
             onClick={() => handleNav('home')}
             className="w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium text-slate-200 hover:bg-slate-800"
