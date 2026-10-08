@@ -1,6 +1,6 @@
 import{Report,ReportedPerson,Evidence,AuditLog,NotificationItem,PoliceUser,District,Upazila,Thana,UnionItem,PublicStatistics,ReportStatus,UserRole}from'../types';
 import{INITIAL_DISTRICTS,INITIAL_UPAZILAS,INITIAL_THANAS,INITIAL_UNIONS,DEMO_PUBLIC_STATS}from'./mockData';
-import{db,isFirebaseConfigured}from'../lib/firebase';
+import{db,isFirebaseConfigured,auth}from'../lib/firebase';
 import{collection,doc,getDoc,getDocs,setDoc,updateDoc,query,where,orderBy,limit}from'firebase/firestore';
 
 class DataService{
@@ -24,7 +24,7 @@ class DataService{
  async getNotifications(thana?:string,uid?:string):Promise<NotificationItem[]>{const db=this.ready();const out=new Map<string,NotificationItem>();if(thana){for(const d of(await getDocs(query(collection(db,'notifications'),where('targetThanaId','==',thana),limit(200)))).docs)out.set(d.id,d.data()as NotificationItem)}if(uid){for(const d of(await getDocs(query(collection(db,'notifications'),where('recipientId','==',uid),limit(200)))).docs)out.set(d.id,d.data()as NotificationItem)}return [...out.values()].sort((a,b)=>b.createdAt.localeCompare(a.createdAt))}
  async markNotificationAsRead(id:string){await updateDoc(doc(this.ready(),'notifications',id),{isRead:true})}
  async getPoliceUsers():Promise<PoliceUser[]>{const s=await getDocs(query(collection(this.ready(),'policeUsers'),limit(500)));return s.docs.map(d=>d.data()as PoliceUser)}
- async createPoliceUser(o:Omit<PoliceUser,'uid'|'createdAt'>):Promise<PoliceUser>{throw new Error('Create the Firebase Auth account first, then create the policeUsers profile as SUPER_ADMIN.')}
+ async createPoliceUser(o:Omit<PoliceUser,'uid'|'createdAt'> & {password:string}):Promise<PoliceUser>{if(!auth?.currentUser)throw new Error('You must be signed in as Super Admin.');const token=await auth.currentUser.getIdToken(true);const res=await fetch('/api/admin/police-users',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify(o)});const data=await res.json().catch(()=>({}));if(!res.ok)throw new Error(data.error||'Failed to create police account');return data.policeUser as PoliceUser}
  async togglePoliceAccountStatus(uid:string):Promise<PoliceUser|null>{const db=this.ready();const ref=doc(db,'policeUsers',uid);const s=await getDoc(ref);if(!s.exists())return null;const p=s.data()as PoliceUser;const n=!p.isActive;await updateDoc(ref,{isActive:n});return{...p,isActive:n}}
  async getPublicStatistics():Promise<PublicStatistics>{const s=await getDoc(doc(this.ready(),'publicStatistics','summary'));return s.exists()?s.data()as PublicStatistics:DEMO_PUBLIC_STATS}
 }
