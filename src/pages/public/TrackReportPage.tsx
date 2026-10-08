@@ -169,15 +169,6 @@ export const TrackReportPage: React.FC<TrackReportPageProps> = ({ onNavigate }) 
             </div>
           )}
 
-          <div className="text-center pt-2">
-            <button
-              onClick={() => onNavigate('report-detail', matchedReport.id)}
-              className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-emerald-400 hover:text-emerald-300 transition"
-            >
-              <span>{t('viewDetails')}</span>
-              <ArrowRight className="w-4 h-4" />
-            </button>
-          </div>
         </div>
       )}
     </div>
