@@ -57,10 +57,11 @@ function AppContent() {
         return <MyReportsPage onNavigate={navigate} />;
       case 'report-detail':
         return (
-          <ReportDetailPage
-            reportId={selectedReportId || 'rep_101'}
-            onNavigate={navigate}
-          />
+          selectedReportId ? (
+            <ReportDetailPage reportId={selectedReportId} onNavigate={navigate} />
+          ) : (
+            <HomePage onNavigate={navigate} />
+          )
         );
       case 'track':
         return <TrackReportPage onNavigate={navigate} />;
@@ -101,10 +102,11 @@ function AppContent() {
             onBack={() => navigate('police-reports')}
             onNavigateLogin={() => navigate('login')}
           >
-            <PoliceReportDetailPage
-              reportId={selectedReportId || 'rep_101'}
-              onNavigate={navigate}
-            />
+            selectedReportId ? (
+              <PoliceReportDetailPage reportId={selectedReportId} onNavigate={navigate} />
+            ) : (
+              <PoliceDashboard onNavigate={navigate} />
+            )
           </RoleGuard>
         );
       case 'police-map':
