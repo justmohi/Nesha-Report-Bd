@@ -3,12 +3,12 @@ import { getAuth, Auth } from 'firebase/auth';
 import { getFirestore, Firestore } from 'firebase/firestore';
 
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || 'AIzaSyD5f9G5JJhpMG4tu2LUD4KJ2qKgqcHA0lY',
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || 'nesha-report-bd.firebaseapp.com',
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || 'nesha-report-bd',
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || 'nesha-report-bd.firebasestorage.app',
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || '370622278585',
-  appId: import.meta.env.VITE_FIREBASE_APP_ID || '1:370622278585:web:de2872d03dd5c6d5fea468',
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || '',
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || '',
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || '',
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || '',
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || '',
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || '',
 };
 
 export const isFirebaseConfigured = Boolean(
