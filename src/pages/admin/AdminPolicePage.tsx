@@ -27,15 +27,21 @@ export const AdminPolicePage: React.FC = () => {
   const [fullName, setFullName] = useState<string>('');
   const [badgeNumber, setBadgeNumber] = useState<string>('');
   const [rank, setRank] = useState<string>('Sub-Inspector (SI)');
-  const [assignedDistrictId, setAssignedDistrictId] = useState<string>('dist_dhaka');
-  const [assignedThanaId, setAssignedThanaId] = useState<string>('thana_gulshan');
+  const [assignedDistrictId, setAssignedDistrictId] = useState<string>('');
+  const [assignedThanaId, setAssignedThanaId] = useState<string>('');
   const [email, setEmail] = useState<string>('');
   const [password, setPassword] = useState<string>('');
 
   useEffect(() => {
     dataService.getPoliceUsers().then(setOfficers);
     dataService.getDistricts().then(setDistricts);
-    dataService.getThanas().then(setThanas);
+    dataService.getThanas().then((list) => {
+      setThanas(list);
+      if (list.length > 0) {
+        setAssignedThanaId((current) => list.some(t => t.id === current) ? current : list[0].id);
+        setAssignedDistrictId((current) => current || list[0].districtId);
+      }
+    });
   }, []);
 
   const handleToggleStatus = async (uid: string) => {
@@ -55,7 +61,7 @@ export const AdminPolicePage: React.FC = () => {
       fullName,
       badgeNumber,
       rank,
-      assignedDistrictId,
+      assignedDistrictId: selThana?.districtId || assignedDistrictId,
       assignedThanaId,
       thanaNameBn: selThana?.nameBn || 'থানা',
       thanaNameEn: selThana?.nameEn || 'Thana',
