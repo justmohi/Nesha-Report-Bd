@@ -3,7 +3,7 @@ import { Thana } from '../types';
 
 const BANGLADESH_POLICE_URL = 'https://www.police.gov.bd/en/metropolitan_police';
 
-type OfficialStation = Omit<Thana, 'districtId'> & { sourceDistrictNameEn: string; policeUnit: string };
+type OfficialStation = Thana & { sourceDistrictNameEn: string; policeUnit: string };
 
 const official = (district: string, unit: string, names: string[]): OfficialStation[] =>
   names.map((name) => ({
@@ -30,7 +30,7 @@ export const officialPoliceStations: OfficialStation[] = [
   ...official('Barishal', 'BMP', ['Kotowali model','Airport PS','Kawnia','Bondor PS']),
 ];
 
-const legacyPoliceStations: Thana[] = upazilas
+const legacyPoliceStations: Thana[] = (upazilas as Array<any>)
   .filter((item) => item.type === 'thana')
   .map((item) => ({
     id: `thana_${item.id}`,
