@@ -50,15 +50,6 @@ router.post('/police-users', requireRoles('SUPER_ADMIN'), async (req: Request, r
       disabled: false,
     });
 
-    const auth = getAuth();
-    const db = getFirestore();
-    const user = await auth.createUser({
-      email: String(email).trim().toLowerCase(),
-      password,
-      displayName: String(fullName).trim(),
-      disabled: false,
-    });
-
     const now = new Date().toISOString();
     const profile = {
       uid: user.uid,
