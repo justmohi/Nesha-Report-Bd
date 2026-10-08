@@ -3,12 +3,17 @@ import{db,isFirebaseConfigured,auth}from'../lib/firebase';
 import{collection,doc,getDoc,getDocs,setDoc,updateDoc,query,where,orderBy,limit}from'firebase/firestore';
 import{getDistricts as geoDistricts,getDivisions as geoDivisions,getUpazilas as geoUpazilas,getAreas as geoAreas,getVillages as geoVillages}from'../data/bdGeoData';
 
+import{Report,ReportedPerson,Evidence,AuditLog,NotificationItem,PoliceUser,District,Upazila,Thana,UnionItem,VillageItem,PublicStatistics,ReportStatus,UserRole}from'../types';
+import{db,isFirebaseConfigured,auth}from'../lib/firebase';
+import{collection,doc,getDoc,getDocs,setDoc,updateDoc,query,where,orderBy,limit}from'firebase/firestore';
+import{getDistricts as geoDistricts,getDivisions as geoDivisions,getUpazilas as geoUpazilas,getAreas as geoAreas,getVillages as geoVillages}from'../data/bdGeoData';
+
 class DataService{
  private ready(){if(!isFirebaseConfigured||!db)throw new Error('Firebase is not configured.');return db}
  async getDistricts():Promise<District[]>{const divs=geoDivisions() as readonly any[];return(geoDistricts() as readonly any[]).map(d=>{const v=divs.find(x=>x.id===d.divisionId);return{id:`dist_${d.id}`,nameEn:d.name,nameBn:d.nameBn,division:v?.name||''}})}
- async getUpazilas(d?:string):Promise<Upazila[]>{const districtId=d?Number(d.replace('dist_','')):undefined;return(geoUpazilas() as readonly any[]).filter(u=>districtId==null||u.districtId===districtId).map(u=>({id:`upz_${u.id}`,districtId:`dist_${u.districtId}`,nameEn:u.name,nameBn:u.nameBn}))}
- async getThanas(u?:string,d?:string):Promise<Thana[]>{const upazilaId=u?Number(u.replace('upz_','')):undefined;const districtId=d?Number(d.replace('dist_','')):undefined;return(geoUpazilas() as readonly any[]).filter(x=>(upazilaId==null||x.id===upazilaId)&&(districtId==null||x.districtId===districtId)).map(x=>({id:`thana_${x.id}`,upazilaId:`upz_${x.id}`,districtId:`dist_${x.districtId}`,nameEn:x.name,nameBn:x.nameBn,code:String(x.id)}))}
- async getUnions(t?:string):Promise<UnionItem[]>{const upazilaId=t?Number(t.replace('thana_','')):undefined;return(geoAreas() as readonly any[]).filter(a=>a.type==='union'&&(upazilaId==null||a.upazilaId===upazilaId)).map(a=>({id:`union_${a.id}`,thanaId:`thana_${a.upazilaId}`,nameEn:a.name,nameBn:a.nameBn}))}
+ async getUpazilas(d?:string):Promise<Upazila[]>{const districtId=d?Number(d.replace('dist_','')):undefined;return(geoUpazilas() as readonly any[]).filter(u=>u.type==='upazila'&&(districtId==null||u.districtId===districtId)).map(u=>({id:`upz_${u.id}`,districtId:`dist_${u.districtId}`,nameEn:u.name,nameBn:u.nameBn}))}
+ async getThanas(_u?:string,d?:string):Promise<Thana[]>{const districtId=d?Number(d.replace('dist_','')):undefined;return(geoUpazilas() as readonly any[]).filter(x=>x.type==='thana'&&(districtId==null||x.districtId===districtId)).map(x=>({id:`thana_${x.id}`,upazilaId:undefined,districtId:`dist_${x.districtId}`,nameEn:x.name,nameBn:x.nameBn,code:String(x.id)}))}
+ async getUnions(u?:string):Promise<UnionItem[]>{const upazilaId=u?Number(u.replace('upz_','')):undefined;return(geoAreas() as readonly any[]).filter(a=>a.type==='union'&&(upazilaId==null||a.upazilaId===upazilaId)).map(a=>({id:`union_${a.id}`,thanaId:'',nameEn:a.name,nameBn:a.nameBn}))}
  async getVillages(u?:string):Promise<VillageItem[]>{const unionId=u?Number(u.replace('union_','')):undefined;return(geoVillages() as readonly any[]).filter(v=>unionId==null||v.areaId===unionId).map(v=>({id:`village_${v.id}`,unionId:`union_${v.areaId}`,nameEn:v.name,nameBn:v.nameBn}))}
 
  async getReports(role:UserRole,uid:string,thana?:string):Promise<Report[]>{const db=this.ready();let q:any;if(role==='SUPER_ADMIN')q=query(collection(db,'reports'),limit(500));else if(role==='POLICE_USER'&&thana)q=query(collection(db,'reports'),where('assignedThanaId','==',thana),limit(500));else q=query(collection(db,'reports'),where('reporterId','==',uid),limit(500));const s=await getDocs(q);return s.docs.map(d=>d.data()as Report).sort((a,b)=>b.createdAt.localeCompare(a.createdAt))}
