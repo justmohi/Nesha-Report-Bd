@@ -220,8 +220,24 @@ export const ReportPage: React.FC<ReportPageProps> = ({ onNavigate }) => {
       return;
     }
 
+    if (!selectedDistrictId) {
+      setErrorMessage(language === 'bn' ? 'অনুগ্রহ করে জেলা নির্বাচন করুন।' : 'Please select a district.');
+      return;
+    }
+
+    if (!selectedUpazilaId) {
+      setErrorMessage(language === 'bn' ? 'অনুগ্রহ করে উপজেলা নির্বাচন করুন।' : 'Please select an upazila.');
+      return;
+    }
+
     if (!selectedThanaId) {
-      setErrorMessage(language === 'bn' ? 'অনুগ্রহ করে দায়িত্বপ্রাপ্ত থানা নির্বাচন করুন।' : 'Please select assigned Thana.');
+      setErrorMessage(language === 'bn' ? 'অনুগ্রহ করে দায়িত্বপ্রাপ্ত থানা নির্বাচন করুন।' : 'Please select an assigned police station.');
+      return;
+    }
+
+    const selectedStation = thanas.find((t) => t.id === selectedThanaId);
+    if (!selectedStation || selectedStation.districtId !== selectedDistrictId) {
+      setErrorMessage(language === 'bn' ? 'নির্বাচিত থানা জেলার সাথে মিলছে না।' : 'The selected police station does not belong to the selected district.');
       return;
     }
 
