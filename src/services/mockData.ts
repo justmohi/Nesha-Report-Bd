@@ -41,12 +41,12 @@ export const INITIAL_THANAS: Thana[] = [
 ];
 
 export const INITIAL_UNIONS: UnionItem[] = [
-  { id: 'un_g19', thanaId: 'thana_gulshan', nameEn: 'Ward 19 (Gulshan 1)', nameBn: 'ওয়ার্ড ১৯ (গুলশান ১)' },
-  { id: 'un_g20', thanaId: 'thana_gulshan', nameEn: 'Ward 20 (Gulshan 2)', nameBn: 'ওয়ার্ড ২০ (গুলশান ২)' },
-  { id: 'un_d15', thanaId: 'thana_dhanmondi', nameEn: 'Ward 15 (Dhanmondi)', nameBn: 'ওয়ার্ড ১৫ (ধানমন্ডি)' },
-  { id: 'un_m10', thanaId: 'thana_mirpur', nameEn: 'Ward 10 (Mirpur 10)', nameBn: 'ওয়ার্ড ১০ (মিরপুর ১০)' },
-  { id: 'un_k31', thanaId: 'thana_kotwali_ctg', nameEn: 'Ward 31 (Kotwali CTG)', nameBn: 'ওয়ার্ড ৩১ (কোতোয়ালী)' },
-  { id: 'un_tk1', thanaId: 'thana_teknaf', nameEn: 'Teknaf Sadar Union', nameBn: 'টেকনাফ সদর ইউনিয়ন' },
+  { id: 'un_g19', upazilaId: 'upz_gulshan', nameEn: 'Ward 19 (Gulshan 1)', nameBn: 'ওয়ার্ড ১৯ (গুলশান ১)' },
+  { id: 'un_g20', upazilaId: 'upz_gulshan', nameEn: 'Ward 20 (Gulshan 2)', nameBn: 'ওয়ার্ড ২০ (গুলশান ২)' },
+  { id: 'un_d15', upazilaId: 'upz_dhanmondi', nameEn: 'Ward 15 (Dhanmondi)', nameBn: 'ওয়ার্ড ১৫ (ধানমন্ডি)' },
+  { id: 'un_m10', upazilaId: 'upz_mirpur', nameEn: 'Ward 10 (Mirpur 10)', nameBn: 'ওয়ার্ড ১০ (মিরপুর ১০)' },
+  { id: 'un_k31', upazilaId: 'upz_kotwali_ctg', nameEn: 'Ward 31 (Kotwali CTG)', nameBn: 'ওয়ার্ড ৩১ (কোতোয়ালী)' },
+  { id: 'un_tk1', upazilaId: 'upz_teknaf', nameEn: 'Teknaf Sadar Union', nameBn: 'টেকনাফ সদর ইউনিয়ন' },
 ];
 
 export const DEMO_POLICE_USERS: PoliceUser[] = [
