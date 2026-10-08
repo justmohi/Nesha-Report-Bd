@@ -23,8 +23,8 @@ export const TrackReportPage: React.FC<TrackReportPageProps> = ({ onNavigate }) 
     setError(null);
     setMatchedReport(null);
 
-    if (!reportIdInput.trim()) {
-      setError(language === 'bn' ? 'অনুগ্রহ করে রিপোর্ট আইডি লিখুন।' : 'Please enter Report ID.');
+    if (!reportIdInput.trim() || !pinInput.trim()) {
+      setError(language === 'bn' ? 'অনুগ্রহ করে রিপোর্ট আইডি ও পিন লিখুন।' : 'Please enter Report ID and PIN.');
       return;
     }
 
@@ -45,11 +45,6 @@ export const TrackReportPage: React.FC<TrackReportPageProps> = ({ onNavigate }) 
     } finally {
       setIsSearching(false);
     }
-  };
-
-  const handleFillDemo = (id: string, pin: string) => {
-    setReportIdInput(id);
-    setPinInput(pin);
   };
 
   return (
@@ -90,13 +85,13 @@ export const TrackReportPage: React.FC<TrackReportPageProps> = ({ onNavigate }) 
 
             <div>
               <label className="block text-xs font-semibold text-slate-300 mb-1.5">
-                {t('trackingPin')} ({language === 'bn' ? 'ঐচ্ছিক' : 'Optional'})
+                {t('trackingPin')} *
               </label>
               <input
                 type="text"
                 value={pinInput}
                 onChange={(e) => setPinInput(e.target.value)}
-                placeholder="4821"
+                placeholder="••••"
                 className="w-full px-4 py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-slate-100 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-emerald-500"
               />
             </div>
@@ -117,25 +112,6 @@ export const TrackReportPage: React.FC<TrackReportPageProps> = ({ onNavigate }) 
             )}
           </button>
         </form>
-
-        {/* Quick Demo Pre-fill helper */}
-        <div className="pt-2 border-t border-slate-800 flex flex-wrap items-center gap-2 text-xs text-slate-400">
-          <span>{language === 'bn' ? 'পরীক্ষামূলক কোড:' : 'Quick Demo IDs:'}</span>
-          <button
-            type="button"
-            onClick={() => handleFillDemo('REP-2026-DH-101', '4821')}
-            className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-emerald-400 font-mono text-[11px]"
-          >
-            REP-2026-DH-101 (4821)
-          </button>
-          <button
-            type="button"
-            onClick={() => handleFillDemo('REP-2026-CTG-103', '9301')}
-            className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-emerald-400 font-mono text-[11px]"
-          >
-            REP-2026-CTG-103 (9301)
-          </button>
-        </div>
 
         {error && (
           <div className="p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs flex items-center gap-2">
