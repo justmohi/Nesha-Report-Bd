@@ -2,6 +2,8 @@ import { Router, Request, Response } from 'express';
 import multer from 'multer';
 import { telegramService } from '../telegram/telegramService';
 import { config } from '../config';
+import { getFirestore } from 'firebase-admin/firestore';
+import { requireRoles } from '../middleware/auth';
 
 const router = Router();
 const upload = multer({
@@ -35,7 +37,15 @@ router.post('/upload', (req: Request, res: Response, next) => {
 }, async (req: Request, res: Response) => {
   try {
     const file = req.file;
-    const { reportId, uploadedBy } = req.body;
+    const { reportId } = req.body;
+    const user = req.user!;
+    if (!reportId) return res.status(400).json({ error: 'reportId is required' });
+    const reportSnap = await getFirestore().doc(`reports/${reportId}`).get();
+    if (!reportSnap.exists) return res.status(404).json({ error: 'Report not found' });
+    const report = reportSnap.data() as any;
+    if (user.role === 'PUBLIC_USER' && report.reporterId !== user.uid) return res.status(403).json({ error: 'You cannot upload evidence to this report' });
+    if (user.role === 'POLICE_USER' && report.assignedThanaId !== user.assignedThanaId) return res.status(403).json({ error: 'Report is outside your assigned Thana' });
+    const uploadedBy = user.uid;
 
     if (!file) {
       return res.status(400).json({ error: 'No evidence file provided' });
@@ -74,10 +84,9 @@ router.post('/upload', (req: Request, res: Response, next) => {
         : 'Telegram storage is not configured yet. Metadata retained locally.',
     };
 
-    return res.status(201).json({
-      success: true,
-      evidence: evidenceRecord,
-    });
+    await getFirestore().doc(`evidence/${evidenceId}`).set({ id:evidenceId, ...evidenceRecord });
+    await getFirestore().doc(`reports/${reportId}`).update({ evidenceIds: [...new Set([...(report.evidenceIds || []), evidenceId])], updatedAt: new Date().toISOString() });
+    return res.status(201).json({ success: true, evidence: evidenceRecord });
   } catch (error: any) {
     console.error('Evidence upload error:', error);
     return res.status(500).json({
@@ -90,6 +99,12 @@ router.post('/upload', (req: Request, res: Response, next) => {
 router.get('/:id/stream', async (req: Request, res: Response) => {
   const { id } = req.params;
   const fileId = req.query.fileId as string;
+  const snap = await getFirestore().doc(`evidence/${id}`).get();
+  if (!snap.exists) return res.status(404).json({ error: 'Evidence not found' });
+  const ev=snap.data() as any; const reportSnap=await getFirestore().doc(`reports/${ev.reportId}`).get();
+  if(!reportSnap.exists)return res.status(404).json({error:'Report not found'}); const report=reportSnap.data() as any; const u=req.user!;
+  if(u.role==='PUBLIC_USER'&&report.reporterId!==u.uid)return res.status(403).json({error:'Forbidden'});
+  if(u.role==='POLICE_USER'&&report.assignedThanaId!==u.assignedThanaId)return res.status(403).json({error:'Forbidden'});
 
   if (!telegramService.isConfigured()) {
     return res.status(503).json({ error: 'Telegram storage is not configured yet.' });
@@ -116,7 +131,7 @@ router.get('/:id/stream', async (req: Request, res: Response) => {
 });
 
 // Delete evidence
-router.delete('/:id', async (req: Request, res: Response) => {
+router.delete('/:id', requireRoles('POLICE_USER','SUPER_ADMIN'), async (req: Request, res: Response) => {
   const messageId = parseInt(req.query.messageId as string, 10);
   if (messageId && telegramService.isConfigured()) {
     try {
