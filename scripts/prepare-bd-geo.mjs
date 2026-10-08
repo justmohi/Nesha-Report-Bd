@@ -10,7 +10,7 @@ const VERSION='2026.08.04';
 const DOWNLOAD_URL=`https://github.com/montasim/bangladesh-location-registry/releases/download/data-${VERSION}/address-bd-data-${VERSION}-json.tar.zst`;
 const root=process.cwd(), cacheDir=path.join(root,'.geo-cache',VERSION), archive=path.join(cacheDir,'dataset.tar.zst'), extractDir=path.join(cacheDir,'extracted'), outputDir=path.join(root,'public','data','bd-geo');
 const EXPECTED_SHA256='9b76179403d735231604aa460031b29b1a60123112f6ea5b27996269c1cd604c';
-const outputs=['admin.json','unions.json','villages.json','manifest.json'];
+const outputs=['admin.json','unions.json','villages.json','police-stations.json','manifest.json'];
 if(outputs.every(n=>existsSync(path.join(outputDir,n))))process.exit(0);
 mkdirSync(cacheDir,{recursive:true});mkdirSync(outputDir,{recursive:true});
 function download(url,destination){return new Promise((resolve,reject)=>{const req=request(url,{headers:{'User-Agent':'Nesha-Report-Bd/1.0'}},res=>{if(res.statusCode>=300&&res.statusCode<400&&res.headers.location){res.resume();return download(new URL(res.headers.location,url).href,destination).then(resolve,reject)}if(res.statusCode!==200){res.resume();return reject(new Error(`Dataset download failed: HTTP ${res.statusCode}`))}pipeline(res,createWriteStream(destination)).then(resolve,reject)});req.on('error',reject);req.end()})}
@@ -34,11 +34,13 @@ async function main(){
  const upazilas=records(files.upazilas).map(x=>({id:x.key,districtId:rel(x,['relations','zillaKey']),...names(x)}));
  const unions=records(files.unions).map(x=>({id:x.key,upazilaId:rel(x,['relations','upazilaKey'])||rel(x,['relations','administrativeArea','key']),districtId:rel(x,['relations','zillaKey']),divisionId:rel(x,['relations','divisionKey']),...names(x)}));
  const villages=records(files.villages).map(x=>({id:x.key,unionId:rel(x,['relations','unionKey'])||rel(x,['relations','localArea','key']),upazilaId:rel(x,['relations','upazilaKey'])||rel(x,['relations','administrativeArea','key']),districtId:rel(x,['relations','zillaKey']),divisionId:rel(x,['relations','divisionKey']),...names(x)})).filter(x=>x.unionId&&x.upazilaId);
- const manifest={source:'montasim/bangladesh-location-registry',version:VERSION,archiveSha256:EXPECTED_SHA256,generatedAt:new Date().toISOString(),counts:{divisions:divisions.length,districts:districts.length,upazilas:upazilas.length,unions:unions.length,villages:villages.length}};
+ const policeStations=records(files.upazilas).filter(x=>String(x.type||'').toLowerCase()==='thana').map(x=>({id:x.key,districtId:rel(x,['relations','zillaKey']),upazilaId:rel(x,['relations','upazilaKey'])||rel(x,['parentUpazilaId']),source:'ADDRESS_REGISTRY',sourceDistrictNameEn:rel(x,['relations','zillaName'])||'',sourceUrl:'https://github.com/montasim/bangladesh-location-registry',...names(x)}));
+ const manifest={source:'montasim/bangladesh-location-registry',version:VERSION,archiveSha256:EXPECTED_SHA256,generatedAt:new Date().toISOString(),counts:{divisions:divisions.length,districts:districts.length,upazilas:upazilas.length,unions:unions.length,villages:villages.length,policeStations:policeStations.length}};
  const write=(name,value)=>fs.writeFileSync(path.join(outputDir,name),value);
  write('admin.json',JSON.stringify({divisions,districts,upazilas}));
  write('unions.json',JSON.stringify(unions));
  write('villages.json',JSON.stringify(villages));
+ write('police-stations.json',JSON.stringify(policeStations));
  write('manifest.json',JSON.stringify(manifest,null,2));
  console.log(`Bangladesh geography ready: ${villages.length.toLocaleString()} villages, ${unions.length.toLocaleString()} unions.`);
 }
