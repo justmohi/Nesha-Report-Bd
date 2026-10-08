@@ -119,14 +119,14 @@ export const PublicMapPage: React.FC = () => {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
       {/* Header */}
       <div>
-        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold mb-2">
+        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-[#006a4e] text-xs font-semibold mb-2">
           <Layers className="w-3.5 h-3.5" />
           <span>{language === 'bn' ? 'অজ্ঞাতনামা এলাকা ঘনত্ব' : 'Anonymized Area Heatmap'}</span>
         </div>
-        <h1 className="text-2xl sm:text-4xl font-extrabold text-white">
+        <h1 className="text-2xl sm:text-4xl font-extrabold text-slate-900">
           {t('publicMap')}
         </h1>
-        <p className="text-xs sm:text-sm text-slate-300 mt-2 max-w-2xl leading-relaxed">
+        <p className="text-xs sm:text-sm text-slate-600 mt-2 max-w-2xl leading-relaxed">
           {language === 'bn'
             ? 'আইন প্রয়োগকারী কর্তৃপক্ষের সহায়তায় সাধারণ এলাকাভিত্তিক সামগ্রিক তথ্যচিত্র। কোনো ব্যক্তি বা সুনির্দিষ্ট আবাসিক ঠিকানার তথ্য এখানে কখনোই প্রদর্শিত হয় না।'
             : 'Aggregated zonal statistics. Strictly prohibits displaying exact residential coordinates or personal names.'}
@@ -134,15 +134,15 @@ export const PublicMapPage: React.FC = () => {
       </div>
 
       {/* Mandatory Non-Blacklist Legal Banner */}
-      <div className="p-4 rounded-2xl bg-slate-900 border border-emerald-500/30 flex items-start gap-3.5 text-xs text-slate-300">
-        <Lock className="w-5 h-5 text-emerald-400 flex-shrink-0 mt-0.5" />
+      <div className="p-4 rounded-2xl bg-white border border-emerald-200 flex items-start gap-3.5 text-xs text-slate-600">
+        <Lock className="w-5 h-5 text-[#006a4e] flex-shrink-0 mt-0.5" />
         <div className="space-y-1">
-          <span className="font-bold text-white block">
+          <span className="font-bold text-slate-900 block">
             {language === 'bn'
               ? 'আইনি গোপনীয়তা শর্তাবলী (Strict Privacy & Anonymization)'
               : 'Strict Anonymization & Legal Privacy Commitment'}
           </span>
-          <p className="leading-relaxed text-slate-300">
+          <p className="leading-relaxed text-slate-600">
             {language === 'bn'
               ? 'এই মানচিত্রে কেবল থানা বা জোনের সাধারণ পরিসংখ্যান দেখানো হয়েছে (যেমন: "মিরপুর এলাকা — ২৪টি রিপোর্ট")। কারও নাম, ব্যক্তিগত ছবি, সুনির্দিষ্ট ফ্ল্যাট বা বাড়ির অবস্থান আইনত সংরক্ষিত এবং এখানে অপ্রকাশ্য।'
               : 'Only aggregated area numbers are displayed (e.g. "Mirpur Area — 24 incidents"). Exact residential addresses, names, and photos are strictly excluded.'}
@@ -153,13 +153,13 @@ export const PublicMapPage: React.FC = () => {
       {/* Main Grid: Visual Map representation + Selected Details */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Left/Middle: Interactive Regional Visual Board */}
-        <div className="lg:col-span-2 p-6 rounded-3xl bg-slate-900 border border-slate-800 space-y-6">
-          <div className="flex items-center justify-between border-b border-slate-800 pb-4">
-            <h3 className="text-sm font-bold text-white flex items-center gap-2">
-              <MapPin className="w-4 h-4 text-emerald-400" />
+        <div className="lg:col-span-2 p-6 rounded-3xl bg-white border border-slate-200 space-y-6">
+          <div className="flex items-center justify-between border-b border-slate-200 pb-4">
+            <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+              <MapPin className="w-4 h-4 text-[#006a4e]" />
               <span>{language === 'bn' ? 'এলাকা নির্বাচন করুন' : 'Select Aggregated Area'}</span>
             </h3>
-            <span className="text-xs text-slate-400">
+            <span className="text-xs text-slate-500">
               {AGGREGATED_AREAS.length} {language === 'bn' ? 'টি জোন নিরীক্ষিত' : 'Monitored Zones'}
             </span>
           </div>
@@ -174,36 +174,36 @@ export const PublicMapPage: React.FC = () => {
                   className={`p-4 rounded-2xl border cursor-pointer transition flex flex-col justify-between space-y-3 ${
                     isSelected
                       ? 'bg-emerald-950/40 border-emerald-500 ring-2 ring-emerald-500/20'
-                      : 'bg-slate-800/40 border-slate-800 hover:border-slate-700'
+                      : 'bg-slate-50/40 border-slate-200 hover:border-slate-300'
                   }`}
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div>
-                      <span className="text-[10px] font-semibold uppercase text-slate-400">
+                      <span className="text-[10px] font-semibold uppercase text-slate-500">
                         {language === 'bn' ? area.districtBn : area.districtEn}
                       </span>
-                      <h4 className="text-sm font-bold text-white mt-0.5">
+                      <h4 className="text-sm font-bold text-slate-900 mt-0.5">
                         {language === 'bn' ? area.nameBn : area.nameEn}
                       </h4>
                     </div>
                     <span
                       className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
                         area.riskLevel === 'HIGH'
-                          ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
+                          ? 'bg-rose-50 text-red-600 border border-rose-500/20'
                           : area.riskLevel === 'MEDIUM'
-                          ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
-                          : 'bg-teal-500/10 text-teal-400 border border-teal-500/20'
+                          ? 'bg-amber-50 text-amber-700 border border-amber-500/20'
+                          : 'bg-teal-50 text-teal-700 border border-teal-200'
                       }`}
                     >
                       {area.riskLevel}
                     </span>
                   </div>
 
-                  <div className="flex items-center justify-between pt-2 border-t border-slate-800/80 text-xs">
-                    <span className="text-slate-400">
+                  <div className="flex items-center justify-between pt-2 border-t border-slate-200/80 text-xs">
+                    <span className="text-slate-500">
                       {language === 'bn' ? 'মোট প্রাপ্ত তথ্য:' : 'Total Reports:'}
                     </span>
-                    <span className="font-bold text-emerald-400 font-mono">
+                    <span className="font-bold text-[#006a4e] font-mono">
                       {area.totalIncidents}
                     </span>
                   </div>
@@ -213,15 +213,15 @@ export const PublicMapPage: React.FC = () => {
           </div>
 
           {/* SVG Map Visualization Illustration */}
-          <div className="p-6 rounded-2xl bg-slate-950/80 border border-slate-800 relative overflow-hidden flex flex-col items-center justify-center text-center space-y-3">
-            <div className="w-12 h-12 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
+          <div className="p-6 rounded-2xl bg-slate-50/80 border border-slate-200 relative overflow-hidden flex flex-col items-center justify-center text-center space-y-3">
+            <div className="w-12 h-12 rounded-full bg-emerald-50 border border-emerald-200 flex items-center justify-center text-[#006a4e]">
               <Shield className="w-6 h-6" />
             </div>
             <div>
-              <h4 className="text-sm font-bold text-white">
+              <h4 className="text-sm font-bold text-slate-900">
                 {language === 'bn' ? 'বাংলাদেশ জাতীয় জোন পরিসংখ্যান গ্রিড' : 'Bangladesh National Zonal Density Grid'}
               </h4>
-              <p className="text-xs text-slate-400 mt-1 max-w-md">
+              <p className="text-xs text-slate-500 mt-1 max-w-md">
                 {language === 'bn'
                   ? 'আইন প্রয়োগকারী সংস্থার নজরদারি ও প্রতিরোধমূলক পেট্রোলিং সক্ষমতা বৃদ্ধির জন্য এই তথ্য ব্যবহৃত হয়।'
                   : 'Used by law enforcement dispatchers to allocate patrols and preventative narcotics enforcement.'}
@@ -231,58 +231,58 @@ export const PublicMapPage: React.FC = () => {
         </div>
 
         {/* Right Details Panel */}
-        <div className="p-6 sm:p-8 rounded-3xl bg-slate-900 border border-slate-800 space-y-6">
-          <div className="border-b border-slate-800 pb-4">
-            <span className="text-xs font-semibold uppercase tracking-wider text-emerald-400">
+        <div className="p-6 sm:p-8 rounded-3xl bg-white border border-slate-200 space-y-6">
+          <div className="border-b border-slate-200 pb-4">
+            <span className="text-xs font-semibold uppercase tracking-wider text-[#006a4e]">
               {language === 'bn' ? 'নির্বাচিত জোনের সংক্ষিপ্ত তথ্য' : 'Zone Breakdown'}
             </span>
-            <h3 className="text-xl font-extrabold text-white mt-1">
+            <h3 className="text-xl font-extrabold text-slate-900 mt-1">
               {language === 'bn' ? selectedArea.nameBn : selectedArea.nameEn}
             </h3>
-            <span className="text-xs text-slate-400">
+            <span className="text-xs text-slate-500">
               {language === 'bn' ? selectedArea.districtBn : selectedArea.districtEn} জেলা
             </span>
           </div>
 
           <div className="space-y-4">
-            <div className="p-4 rounded-2xl bg-slate-800/50 border border-slate-800 flex justify-between items-center">
-              <span className="text-xs text-slate-400">
+            <div className="p-4 rounded-2xl bg-slate-50/50 border border-slate-200 flex justify-between items-center">
+              <span className="text-xs text-slate-500">
                 {language === 'bn' ? 'মোট প্রাপ্ত রিপোর্ট' : 'Total Reports'}
               </span>
-              <span className="text-lg font-bold text-white font-mono">
+              <span className="text-lg font-bold text-slate-900 font-mono">
                 {selectedArea.totalIncidents}
               </span>
             </div>
 
-            <div className="p-4 rounded-2xl bg-slate-800/50 border border-slate-800 flex justify-between items-center">
-              <span className="text-xs text-slate-400">
+            <div className="p-4 rounded-2xl bg-slate-50/50 border border-slate-200 flex justify-between items-center">
+              <span className="text-xs text-slate-500">
                 {language === 'bn' ? 'যাচাইকৃত সত্যতা' : 'Verified Incidents'}
               </span>
-              <span className="text-lg font-bold text-emerald-400 font-mono">
+              <span className="text-lg font-bold text-[#006a4e] font-mono">
                 {selectedArea.verifiedCount}
               </span>
             </div>
 
-            <div className="p-4 rounded-2xl bg-slate-800/50 border border-slate-800 flex justify-between items-center">
-              <span className="text-xs text-slate-400">
+            <div className="p-4 rounded-2xl bg-slate-50/50 border border-slate-200 flex justify-between items-center">
+              <span className="text-xs text-slate-500">
                 {language === 'bn' ? 'গৃহীত আইনি ব্যবস্থা' : 'Action Taken'}
               </span>
-              <span className="text-lg font-bold text-purple-400 font-mono">
+              <span className="text-lg font-bold text-purple-700 font-mono">
                 {selectedArea.actionTakenCount}
               </span>
             </div>
 
-            <div className="p-4 rounded-2xl bg-slate-800/50 border border-slate-800 space-y-1">
-              <span className="text-xs text-slate-400 block">
+            <div className="p-4 rounded-2xl bg-slate-50/50 border border-slate-200 space-y-1">
+              <span className="text-xs text-slate-500 block">
                 {language === 'bn' ? 'প্রধান চিহ্নিত উপাদান' : 'Primary Substances'}
               </span>
-              <span className="text-sm font-semibold text-amber-300">
+              <span className="text-sm font-semibold text-amber-700">
                 {language === 'bn' ? selectedArea.topSubstanceBn : selectedArea.topSubstanceEn}
               </span>
             </div>
           </div>
 
-          <div className="p-4 rounded-2xl bg-emerald-950/30 border border-emerald-900/40 text-xs text-emerald-300/90 leading-relaxed">
+          <div className="p-4 rounded-2xl bg-emerald-950/30 border border-emerald-900/40 text-xs text-[#006a4e]/90 leading-relaxed">
             {language === 'bn'
               ? 'আপনার এলাকায় সন্দেহজনক মাদক বিক্রয় বা লেনদেনের তথ্য জানা থাকলে দায়িত্বশীলভাবে রিপোর্ট করুন।'
               : 'Notice something suspicious in your locality? Report responsibly to assist local police stations.'}
