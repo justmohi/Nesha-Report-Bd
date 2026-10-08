@@ -4,13 +4,33 @@ import{collection,doc,getDoc,getDocs,setDoc,updateDoc,query,where,orderBy,limit}
 import{getUpazilas as geoUpazilas}from'../data/bdGeoData';
 import{getPoliceStations}from'../data/policeStations';
 
+const normalizeName=(value:string)=>value.toLowerCase().replace(/[\s._-]+/g,'').replace(/chittagong/g,'chattogram').replace(/barisal/g,'barishal');
+
 class DataService{
  private ready(){if(!isFirebaseConfigured||!db)throw new Error('Firebase is not configured.');return db}
  private geoCache:Record<string,any[]>={};
  private async geo<T=any>(file:string):Promise<T[]>{if(this.geoCache[file])return this.geoCache[file] as T[];const res=await fetch(`/data/bd-geo/${file}`);if(!res.ok)throw new Error(`Failed to load geography dataset: ${file}`);const data=await res.json();this.geoCache[file]=Array.isArray(data)?data:(data.records||[]);return this.geoCache[file] as T[]}
  async getDistricts():Promise<District[]>{const admin=await fetch('/data/bd-geo/admin.json').then(r=>r.json());return admin.districts.map((d:any)=>({id:d.id,nameEn:d.nameEn,nameBn:d.nameBn,division:d.divisionId||''}))}
  async getUpazilas(d?:string):Promise<Upazila[]>{const admin=await fetch('/data/bd-geo/admin.json').then(r=>r.json());return admin.upazilas.filter((u:any)=>!d||u.districtId===d).map((u:any)=>({id:u.id,districtId:u.districtId,nameEn:u.nameEn,nameBn:u.nameBn}))}
- async getThanas(_u?:string,d?:string):Promise<Thana[]>{const stations=getPoliceStations() as any[];const admin=await fetch('/data/bd-geo/admin.json').then(r=>r.json());const district=admin.districts.find((x:any)=>x.id===d);return stations.filter(s=>!district||s.districtId===district.legacyId).map(s=>({...s,upazilaId:undefined}))}
+ async getThanas(_u?:string,d?:string):Promise<Thana[]>{
+   const stations=getPoliceStations();
+   const admin=await fetch('/data/bd-geo/admin.json').then(r=>r.json());
+   const district=admin.districts.find((x:any)=>x.id===d);
+   if(!district)return [];
+   const legacyIds=new Set([district.id,district.legacyId].filter(Boolean));
+   const districtNames=new Set([district.nameEn,district.nameBn].filter(Boolean).map(normalizeName));
+   const matched=stations.filter((station:any)=>{
+     if(station.source==='BANGLADESH_POLICE') return districtNames.has(normalizeName(station.sourceDistrictNameEn||''));
+     return legacyIds.has(station.districtId);
+   });
+   const seen=new Set<string>();
+   return matched.filter((station:any)=>{
+     const key=`${normalizeName(station.nameEn)}|${normalizeName(station.sourceDistrictNameEn||district.nameEn)}`;
+     if(seen.has(key))return false;
+     seen.add(key);
+     return true;
+   }).map((station:any)=>({...station,districtId:district.id,upazilaId:undefined}));
+ }
  async getUnions(u?:string):Promise<UnionItem[]>{const rows=await this.geo<any>('unions.json');return rows.filter(a=>!u||a.upazilaId===u).map(a=>({id:a.id,upazilaId:a.upazilaId,nameEn:a.nameEn,nameBn:a.nameBn}))}
  async getVillages(u?:string):Promise<VillageItem[]>{const rows=await this.geo<any>('villages.json');return rows.filter(v=>!u||v.unionId===u).map(v=>({id:v.id,unionId:v.unionId,nameEn:v.nameEn,nameBn:v.nameBn}))}
 
@@ -25,7 +45,7 @@ class DataService{
  async logAudit(l:{userId:string;userName?:string;role:string;action:string;reportId?:string;evidenceId?:string;metadata?:Record<string,any>}):Promise<AuditLog>{const db=this.ready();const ref=doc(collection(db,'auditLogs'));const v:AuditLog={id:ref.id,logId:ref.id,...l,userName:l.userName||'System',timestamp:new Date().toISOString()};await setDoc(ref,v);return v}
  async getAuditLogs():Promise<AuditLog[]>{const s=await getDocs(query(collection(this.ready(),'auditLogs'),orderBy('timestamp','desc'),limit(500)));return s.docs.map(d=>d.data()as AuditLog)}
  async createNotification(n:{targetThanaId?:string;recipientId?:string;title:string;message:string;reportId?:string}):Promise<NotificationItem>{const ref=doc(collection(this.ready(),'notifications'));const v:NotificationItem={id:ref.id,notificationId:`NOTIF-${Date.now()}`,...n,isRead:false,createdAt:new Date().toISOString()};await setDoc(ref,v);return v}
- async getNotifications(thana?:string,uid?:string):Promise<NotificationItem[]>{const db=this.ready();const out=new Map<string,NotificationItem>();if(thana){for(const d of(await getDocs(query(collection(db,'notifications'),where('targetThanaId','==',thana),limit(200)))).docs)out.set(d.id,d.data()as NotificationItem)}if(uid){for(const d of(await getDocs(query(collection(db,'notifications'),where('recipientId','==',uid),limit(200)))).docs)out.set(d.id,d.data()as NotificationItem)}return [...out.values()].sort((a,b)=>b.createdAt.localeCompare(a.createdAt))}
+ async getNotifications(thana?:string,uid?:string):Promise<NotificationItem[]>{const db=this.ready();const out=new Map<string,NotificationItem>();if(thana){for(const d of(await getDocs(query(collection(db,'notifications'),where('targetThanaId','==',thana),limit(200)))).docs)out.set(d.id,d.data()as NotificationItem)}if(uid){for(const d of(await getDocs(query(collection(db,'notifications'),where('recipientId','==',uid),limit(200)))).docs)out.set(d.id,d.data()as NotificationItem)}return[...out.values()].sort((a,b)=>b.createdAt.localeCompare(a.createdAt))}
  async markNotificationAsRead(id:string){await updateDoc(doc(this.ready(),'notifications',id),{isRead:true})}
  async getPoliceUsers():Promise<PoliceUser[]>{const s=await getDocs(query(collection(this.ready(),'policeUsers'),limit(500)));return s.docs.map(d=>d.data()as PoliceUser)}
  async createPoliceUser(o:Omit<PoliceUser,'uid'|'createdAt'> & {password:string}):Promise<PoliceUser>{if(!auth?.currentUser)throw new Error('You must be signed in as Super Admin.');const token=await auth.currentUser.getIdToken(true);const res=await fetch('/api/admin/police-users',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify(o)});const data=await res.json().catch(()=>({}));if(!res.ok)throw new Error(data.error||'Failed to create police account');return data.policeUser as PoliceUser}
