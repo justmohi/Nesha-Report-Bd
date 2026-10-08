@@ -167,14 +167,17 @@ export interface Upazila {
   nameBn: string;
 }
 
+export type UserRole = 'PUBLIC_USER' | 'POLICE_USER' | 'SUPER_ADMIN';
+
 export interface Thana {
   id: string;
-  upazilaId: string;
+  upazilaId?: string;
   districtId: string;
   nameEn: string;
   nameBn: string;
   code?: string;
 }
+
 
 export interface UnionItem {
   id: string;
