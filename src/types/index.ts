@@ -61,6 +61,7 @@ export interface ReportJurisdiction {
   thanaName: string;
   unionId?: string;
   unionName?: string;
+  villageId?: string;
   villageArea?: string;
   roadLandmark?: string;
 }
