@@ -7,7 +7,7 @@ import { createWriteStream, existsSync, mkdirSync, readFileSync } from 'node:fs'
 import { request } from 'node:https';
 
 const VERSION='2026.08.04';
-const URL=`https://github.com/montasim/bangladesh-location-registry/releases/download/data-${VERSION}/address-bd-data-${VERSION}-json.tar.zst`;
+const DOWNLOAD_URL=`https://github.com/montasim/bangladesh-location-registry/releases/download/data-${VERSION}/address-bd-data-${VERSION}-json.tar.zst`;
 const root=process.cwd(), cacheDir=path.join(root,'.geo-cache',VERSION), archive=path.join(cacheDir,'dataset.tar.zst'), extractDir=path.join(cacheDir,'extracted'), outputDir=path.join(root,'public','data','bd-geo');
 const EXPECTED_SHA256='9b76179403d735231604aa460031b29b1a60123112f6ea5b27996269c1cd604c';
 const outputs=['admin.json','unions.json','villages.json','manifest.json'];
@@ -20,7 +20,7 @@ function records(file){const v=JSON.parse(readFileSync(file,'utf8'));return Arra
 function names(x){return{nameEn:x?.name?.en||'',nameBn:x?.name?.bn||x?.name?.en||''}}
 function rel(x,parts){let v=x;for(const p of parts)v=v?.[p];return typeof v==='string'?v:''}
 async function main(){
- if(!existsSync(archive)){console.log(`Downloading Bangladesh geography ${VERSION}...`);await download(URL,archive)}
+ if(!existsSync(archive)){console.log(`Downloading Bangladesh geography ${VERSION}...`);await download(DOWNLOAD_URL,archive)}
  if(sha256(archive)!==EXPECTED_SHA256)throw new Error('Downloaded Bangladesh geography archive failed SHA-256 verification.');
  if(!existsSync(extractDir))mkdirSync(extractDir,{recursive:true});
  if(!findFile(extractDir,'villages.json'))execFileSync('tar',['--zstd','-xf',archive,'-C',extractDir],{stdio:'inherit'});
