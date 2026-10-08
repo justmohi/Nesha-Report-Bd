@@ -173,10 +173,9 @@ service cloud.firestore {
 
       allow list: if isAdmin() || (isSignedIn() && resource.data.uploadedBy == request.auth.uid);
 
-      allow create: if isSignedIn() && incoming().uploadedBy == request.auth.uid && incoming().evidenceId == evidenceId && exists(/databases/$(database)/documents/reports/$(incoming().reportId)) && (isAdmin() || get(/databases/$(database)/documents/reports/$(incoming().reportId)).data.reporterId == request.auth.uid || (isPolice() && get(/databases/$(database)/documents/reports/$(incoming().reportId)).data.assignedThanaId == getPoliceDoc().assignedThanaId));
-
-      allow update: if isAdmin();
-      allow delete: if isAdmin() || (isSignedIn() && existing().uploadedBy == request.auth.uid);
+      // Evidence is persisted only through the authenticated backend route,
+      // which also coordinates Telegram storage and the parent report.
+      allow create, update, delete: if isAdmin();
     }
 
     // ==========================================
