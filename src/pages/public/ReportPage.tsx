@@ -6,6 +6,7 @@ import {
   Upazila,
   Thana,
   UnionItem,
+  VillageItem,
   IncidentCategory,
   Evidence
 } from '../../types';
@@ -47,11 +48,13 @@ export const ReportPage: React.FC<ReportPageProps> = ({ onNavigate }) => {
   const [upazilas, setUpazilas] = useState<Upazila[]>([]);
   const [thanas, setThanas] = useState<Thana[]>([]);
   const [unions, setUnions] = useState<UnionItem[]>([]);
+  const [villages, setVillages] = useState<VillageItem[]>([]);
 
-  const [selectedDistrictId, setSelectedDistrictId] = useState<string>('dist_dhaka');
-  const [selectedUpazilaId, setSelectedUpazilaId] = useState<string>('upz_gulshan');
-  const [selectedThanaId, setSelectedThanaId] = useState<string>('thana_gulshan');
+  const [selectedDistrictId, setSelectedDistrictId] = useState<string>('');
+  const [selectedUpazilaId, setSelectedUpazilaId] = useState<string>('');
+  const [selectedThanaId, setSelectedThanaId] = useState<string>('');
   const [selectedUnionId, setSelectedUnionId] = useState<string>('');
+  const [selectedVillageId, setSelectedVillageId] = useState<string>('');
   const [villageArea, setVillageArea] = useState<string>('');
   const [roadLandmark, setRoadLandmark] = useState<string>('');
   const [latitude, setLatitude] = useState<string>('');
@@ -96,6 +99,7 @@ export const ReportPage: React.FC<ReportPageProps> = ({ onNavigate }) => {
   useEffect(() => {
     dataService.getDistricts().then((list) => {
       setDistricts(list);
+      if (list.length > 0) setSelectedDistrictId((current) => list.some(d => d.id === current) ? current : list[0].id);
     });
   }, []);
 
@@ -129,6 +133,20 @@ export const ReportPage: React.FC<ReportPageProps> = ({ onNavigate }) => {
       });
     }
   }, [selectedThanaId]);
+
+  useEffect(() => {
+    if (selectedUnionId) {
+      dataService.getVillages(selectedUnionId).then((list) => {
+        setVillages(list);
+        setSelectedVillageId(list.length > 0 ? list[0].id : '');
+        setVillageArea(list.length > 0 ? (language === 'bn' ? list[0].nameBn : list[0].nameEn) : '');
+      });
+    } else {
+      setVillages([]);
+      setSelectedVillageId('');
+      setVillageArea('');
+    }
+  }, [selectedUnionId, language]);
 
   // GPS Acquisition
   const handleDetectGPS = () => {
@@ -443,8 +461,7 @@ export const ReportPage: React.FC<ReportPageProps> = ({ onNavigate }) => {
             {/* Thana (Assigned) */}
             <div>
               <label className="block text-xs font-semibold text-emerald-400 mb-1.5 flex items-center gap-1">
-                <span>{t('thana')} *</span>
-                <span className="text-[10px] text-slate-400">({language === 'bn' ? 'দায়িত্বপ্রাপ্ত' : 'Assigned'})</span>
+                <span>{language === 'bn' ? 'উপজেলা / থানা' : 'Upazila / Thana'} *</span>
               </label>
               <select
                 value={selectedThanaId}
@@ -480,18 +497,32 @@ export const ReportPage: React.FC<ReportPageProps> = ({ onNavigate }) => {
               </select>
             </div>
 
-            {/* Village / Area */}
+            {/* Village */}
             <div>
               <label className="block text-xs font-semibold text-slate-300 mb-1.5">
-                {t('villageArea')}
+                {language === 'bn' ? 'গ্রাম' : 'Village'}
               </label>
-              <input
-                type="text"
-                value={villageArea}
-                onChange={(e) => setVillageArea(e.target.value)}
-                placeholder={language === 'bn' ? 'যেমন: ডিএনসিসি মার্কেট গলি, নিকেতন' : 'e.g. Market alley, block C'}
-                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
-              />
+              <select
+                value={selectedVillageId}
+                onChange={(e) => {
+                  const id = e.target.value;
+                  setSelectedVillageId(id);
+                  const village = villages.find(v => v.id === id);
+                  setVillageArea(village ? (language === 'bn' ? village.nameBn : village.nameEn) : '');
+                }}
+                disabled={!selectedUnionId}
+                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 disabled:opacity-50"
+              >
+                <option value="">{selectedUnionId ? (language === 'bn' ? 'গ্রাম নির্বাচন করুন' : 'Select village') : (language === 'bn' ? 'আগে ইউনিয়ন নির্বাচন করুন' : 'Select union first')}</option>
+                {villages.map((v) => (
+                  <option key={v.id} value={v.id}>
+                    {language === 'bn' ? v.nameBn : v.nameEn}
+                  </option>
+                ))}
+              </select>
+              <p className="mt-1 text-[10px] text-slate-500">
+                {language === 'bn' ? 'ইউনিয়ন নির্বাচন করলে সংশ্লিষ্ট গ্রামের তালিকা আসবে।' : 'Village list is filtered by the selected union.'}
+              </p>
             </div>
 
             {/* Road / Landmark */}
