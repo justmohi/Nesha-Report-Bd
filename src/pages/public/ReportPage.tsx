@@ -189,6 +189,14 @@ export const ReportPage: React.FC<ReportPageProps> = ({ onNavigate }) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage(null);
+    setUploadError(null);
+
+    if (!currentUser) {
+      setErrorMessage(language === 'bn'
+        ? 'রিপোর্ট জমা দিতে অনুগ্রহ করে আগে লগইন করুন।'
+        : 'Please log in before submitting a report.');
+      return;
+    }
 
     if (!description.trim()) {
       setErrorMessage(language === 'bn' ? 'অনুগ্রহ করে ঘটনার বর্ণনা প্রদান করুন।' : 'Please provide incident description.');
@@ -203,51 +211,13 @@ export const ReportPage: React.FC<ReportPageProps> = ({ onNavigate }) => {
     setIsSubmitting(true);
 
     try {
-      // 1. Upload evidence to Telegram Storage backend if files present
-      const uploadedIds: string[] = [];
-      const tempReportId = `REP-${Date.now()}`;
-
-      if (evidenceFiles.length > 0) {
-        setIsUploadingFiles(true);
-        for (let i = 0; i < evidenceFiles.length; i++) {
-          const file = evidenceFiles[i];
-          setUploadProgress(Math.round(((i + 1) / evidenceFiles.length) * 100));
-
-          try {
-            const ev = await storageService.uploadEvidence({
-              file,
-              reportId: tempReportId,
-              uploadedBy: currentUser?.uid || 'citizen_anonymous',
-            });
-            uploadedIds.push(ev.evidenceId);
-          } catch (uploadErr: any) {
-            console.warn('Evidence upload warning:', uploadErr);
-            // Even if Telegram is not configured yet or has an upload issue, the report itself must still succeed
-            // Create fallback local evidence record
-            const fallbackEv = await dataService.addEvidence({
-              reportId: tempReportId,
-              provider: 'telegram',
-              fileType: file.type || 'application/octet-stream',
-              fileName: file.name,
-              fileSize: file.size,
-              uploadedBy: currentUser?.uid || 'citizen_anonymous',
-              previewUrl: file.type.startsWith('image/') ? URL.createObjectURL(file) : undefined,
-            });
-            uploadedIds.push(fallbackEv.id);
-          }
-        }
-        setIsUploadingFiles(false);
-      }
-
-      // 2. Prepare Jurisdiction names
       const curDistrict = districts.find((d) => d.id === selectedDistrictId);
       const curUpazila = upazilas.find((u) => u.id === selectedUpazilaId);
       const curThana = thanas.find((t) => t.id === selectedThanaId);
       const curUnion = unions.find((u) => u.id === selectedUnionId);
 
-      // 3. Prepare Report Payload
       const reportPayload = {
-        reporterId: currentUser?.uid || `citizen_${Date.now()}`,
+        reporterId: currentUser.uid,
         reporterName: reporterName || 'গোপনীয় নাগরিক',
         reporterPhone: reporterPhone || '',
         jurisdiction: {
@@ -263,7 +233,7 @@ export const ReportPage: React.FC<ReportPageProps> = ({ onNavigate }) => {
           roadLandmark,
         },
         incidentType: incidentCategory,
-        description,
+        description: description.trim(),
         incidentDate,
         incidentTime,
         location: {
@@ -271,11 +241,10 @@ export const ReportPage: React.FC<ReportPageProps> = ({ onNavigate }) => {
           longitude: longitude ? parseFloat(longitude) : undefined,
           generalArea: `${villageArea ? villageArea + ', ' : ''}${curThana?.nameBn || ''}`,
         },
-        evidenceIds: uploadedIds,
+        evidenceIds: [],
         assignedThanaId: selectedThanaId,
       };
 
-      // 4. Prepare Confidential Person details if filled
       const personPayload = (personName || personAlias || personDescription) ? {
         name: personName,
         alias: personAlias,
@@ -286,7 +255,42 @@ export const ReportPage: React.FC<ReportPageProps> = ({ onNavigate }) => {
         additionalNotes: personOtherNotes,
       } : undefined;
 
+      // Create the report first. Evidence storage requires a real Firestore report ID.
       const created = await dataService.createReport(reportPayload, personPayload);
+
+      // Upload evidence only after the report exists. The backend authenticates the
+      // request and attaches each successful evidence record to this real report.
+      const failedUploads: string[] = [];
+      if (evidenceFiles.length > 0) {
+        setIsUploadingFiles(true);
+        for (let i = 0; i < evidenceFiles.length; i++) {
+          const file = evidenceFiles[i];
+          setUploadProgress(Math.round((i / evidenceFiles.length) * 100));
+          try {
+            await storageService.uploadEvidence({
+              file,
+              reportId: created.id,
+              uploadedBy: currentUser.uid,
+              onProgress: (progress) => {
+                const base = (i / evidenceFiles.length) * 100;
+                const portion = progress / evidenceFiles.length;
+                setUploadProgress(Math.min(100, Math.round(base + portion)));
+              },
+            });
+          } catch (uploadErr: any) {
+            console.warn('Evidence upload warning:', uploadErr);
+            failedUploads.push(file.name);
+          }
+        }
+        setUploadProgress(100);
+        setIsUploadingFiles(false);
+      }
+
+      if (failedUploads.length > 0) {
+        setUploadError(language === 'bn'
+          ? `রিপোর্ট জমা হয়েছে, তবে ${failedUploads.length}টি প্রমাণ ফাইল সংরক্ষণ করা যায়নি।`
+          : `The report was submitted, but ${failedUploads.length} evidence file(s) could not be stored.`);
+      }
 
       setCreatedReport({
         id: created.id,
