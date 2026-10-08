@@ -226,10 +226,45 @@ router.delete('/:id', requireRoles('POLICE_USER','SUPER_ADMIN'), async (req: Req
       }
     }
 
-    await ref.delete();
-    await reportRef.update({
-      evidenceIds: (report.evidenceIds || []).filter((id: string) => id !== ev.evidenceId && id !== req.params.id),
-      updatedAt: new Date().toISOString(),
+    const now = new Date().toISOString();
+    await db.runTransaction(async (tx) => {
+      const currentEvidence = await tx.get(ref);
+      const currentReport = await tx.get(reportRef);
+      if (!currentEvidence.exists) throw new Error('Evidence not found');
+      if (!currentReport.exists) throw new Error('Report not found');
+
+      const currentEv = currentEvidence.data() as any;
+      const currentReportData = currentReport.data() as any;
+      if (
+        user.role === 'POLICE_USER' &&
+        currentReportData.assignedThanaId !== user.assignedThanaId
+      ) {
+        throw new Error('Evidence is outside your assigned Thana');
+      }
+
+      tx.delete(ref);
+      tx.update(reportRef, {
+        evidenceIds: (currentReportData.evidenceIds || []).filter(
+          (id: string) => id !== currentEv.evidenceId && id !== req.params.id,
+        ),
+        updatedAt: now,
+      });
+    });
+
+    await db.collection('auditLogs').add({
+      logId: `audit_${Date.now()}_${Math.floor(Math.random() * 1000)}`,
+      userId: user.uid,
+      userName: user.name || user.email || 'User',
+      role: user.role,
+      action: 'EVIDENCE_DELETED',
+      reportId: ev.reportId,
+      evidenceId: ev.evidenceId || req.params.id,
+      metadata: {
+        fileName: ev.fileName || null,
+        telegramMessageId: ev.telegramMessageId || null,
+        thanaId: report.assignedThanaId || null,
+      },
+      timestamp: now,
     });
 
     return res.json({ success: true });
