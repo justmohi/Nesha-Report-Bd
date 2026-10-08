@@ -30,7 +30,7 @@ export const officialPoliceStations: OfficialStation[] = [
   ...official('Barishal', 'BMP', ['Kotowali model','Airport PS','Kawnia','Bondor PS']),
 ];
 
-const legacyPoliceStations: Thana[] = (upazilas as Array<any>)
+const legacyPoliceStations: Thana[] = (upazilas as readonly any[])
   .filter((item) => item.type === 'thana')
   .map((item) => ({
     id: `thana_${item.id}`,
