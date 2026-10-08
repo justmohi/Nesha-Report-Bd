@@ -1,6 +1,6 @@
 import{Report,ReportedPerson,Evidence,AuditLog,NotificationItem,PoliceUser,District,Upazila,Thana,UnionItem,VillageItem,PublicStatistics,ReportStatus,UserRole,HomeBanner}from'../types';
 import{db,isFirebaseConfigured,auth}from'../lib/firebase';
-import{collection,doc,getDoc,getDocs,setDoc,updateDoc,writeBatch,query,where,orderBy,limit}from'firebase/firestore';
+import{collection,doc,getDoc,getDocs,setDoc,updateDoc,deleteDoc,writeBatch,query,where,orderBy,limit}from'firebase/firestore';
 import{getUpazilas as geoUpazilas}from'../data/bdGeoData';
 import{getPoliceStations}from'../data/policeStations';
 
@@ -56,7 +56,7 @@ class DataService{
  async getHomeBanners():Promise<HomeBanner[]>{const s=await getDocs(query(collection(this.ready(),'homepageBanners'),where('isActive','==',true),limit(5)));return s.docs.map(d=>d.data()as HomeBanner).sort((a,b)=>a.order-b.order)}
  async getAllHomeBanners():Promise<HomeBanner[]>{const s=await getDocs(query(collection(this.ready(),'homepageBanners'),limit(5)));return s.docs.map(d=>d.data()as HomeBanner).sort((a,b)=>a.order-b.order)}
  async saveHomeBanner(banner:HomeBanner):Promise<HomeBanner>{const db=this.ready();await setDoc(doc(db,'homepageBanners',banner.id),banner);return banner}
- async deleteHomeBanner(id:string):Promise<void>{await setDoc(doc(this.ready(),'homepageBanners',id),{deleted:true},{merge:true});await updateDoc(doc(this.ready(),'homepageBanners',id),{isActive:false})}
+ async deleteHomeBanner(id:string):Promise<void>{await deleteDoc(doc(this.ready(),'homepageBanners',id))}
  async getPublicStatistics():Promise<PublicStatistics>{const s=await getDoc(doc(this.ready(),'publicStatistics','summary'));if(s.exists())return s.data()as PublicStatistics;return{totalReports:0,underReview:0,verifiedIncidents:0,actionTaken:0,areasCovered:0,categoryDistribution:[],monthlyTrends:[]}}
 }
 export const dataService=new DataService();export default dataService;
