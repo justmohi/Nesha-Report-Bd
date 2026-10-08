@@ -1,5 +1,4 @@
 import{Report,ReportedPerson,Evidence,AuditLog,NotificationItem,PoliceUser,District,Upazila,Thana,UnionItem,VillageItem,PublicStatistics,ReportStatus,UserRole}from'../types';
-import{DEMO_PUBLIC_STATS}from'./mockData';
 import{db,isFirebaseConfigured,auth}from'../lib/firebase';
 import{collection,doc,getDoc,getDocs,setDoc,updateDoc,query,where,orderBy,limit}from'firebase/firestore';
 import{getDistricts as geoDistricts,getDivisions as geoDivisions,getUpazilas as geoUpazilas,getAreas as geoAreas,getVillages as geoVillages}from'@olism/bd-geo';
