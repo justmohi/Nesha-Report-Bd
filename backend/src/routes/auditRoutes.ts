@@ -1,12 +1,1 @@
-import { Router, Request, Response } from 'express';
-
-const router = Router();
-
-router.get('/', (_req: Request, res: Response) => {
-  res.json({
-    success: true,
-    message: 'Authorized audit trail query',
-  });
-});
-
-export default router;
+import{Router,Request,Response}from'express';import{getFirestore}from'firebase-admin/firestore';import{requireRoles}from'../middleware/auth.js';const router=Router();router.get('/',requireRoles('SUPER_ADMIN'),async(_req:Request,res:Response)=>{try{const s=await getFirestore().collection('auditLogs').orderBy('timestamp','desc').limit(500).get();return res.json({success:true,logs:s.docs.map(d=>d.data())})}catch(e:any){return res.status(500).json({error:e.message||'Failed to load audit logs'})}});export default router;
