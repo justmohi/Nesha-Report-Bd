@@ -111,10 +111,28 @@ router.post('/upload', (req: Request, res: Response, next) => {
           throw new Error('Report is outside your assigned Thana');
         }
         const evidenceRef = db.doc(`evidence/${evidenceId}`);
+        const auditRef = db.collection('auditLogs').doc();
         const evidenceIds = Array.from(new Set([...(currentData.evidenceIds || []), evidenceId]));
         const updatedAt = new Date().toISOString();
         tx.set(evidenceRef, { id: evidenceId, ...evidenceRecord });
         tx.update(reportRef, { evidenceIds, updatedAt });
+        tx.set(auditRef, {
+          logId: auditRef.id,
+          userId: uploadedBy,
+          userName: user.name || user.email || 'User',
+          role: user.role,
+          action: 'EVIDENCE_UPLOADED',
+          reportId,
+          evidenceId,
+          metadata: {
+            fileName: originalName,
+            fileType: mime,
+            fileSize: file.size,
+            telegramMessageId: telegramResult?.messageId || null,
+            thanaId: currentData.assignedThanaId || null,
+          },
+          timestamp: updatedAt,
+        });
       });
     } catch (storageError) {
       if (telegramResult?.messageId && telegramService.isConfigured()) {
@@ -242,6 +260,7 @@ router.delete('/:id', requireRoles('POLICE_USER','SUPER_ADMIN'), async (req: Req
         throw new Error('Evidence is outside your assigned Thana');
       }
 
+      const auditRef = db.collection('auditLogs').doc();
       tx.delete(ref);
       tx.update(reportRef, {
         evidenceIds: (currentReportData.evidenceIds || []).filter(
@@ -249,23 +268,24 @@ router.delete('/:id', requireRoles('POLICE_USER','SUPER_ADMIN'), async (req: Req
         ),
         updatedAt: now,
       });
+      tx.set(auditRef, {
+        logId: auditRef.id,
+        userId: user.uid,
+        userName: user.name || user.email || 'User',
+        role: user.role,
+        action: 'EVIDENCE_DELETED',
+        reportId: currentEv.reportId,
+        evidenceId: currentEv.evidenceId || req.params.id,
+        metadata: {
+          fileName: currentEv.fileName || null,
+          telegramMessageId: currentEv.telegramMessageId || null,
+          thanaId: currentReportData.assignedThanaId || null,
+        },
+        timestamp: now,
+      });
     });
 
-    await db.collection('auditLogs').add({
-      logId: `audit_${Date.now()}_${Math.floor(Math.random() * 1000)}`,
-      userId: user.uid,
-      userName: user.name || user.email || 'User',
-      role: user.role,
-      action: 'EVIDENCE_DELETED',
-      reportId: ev.reportId,
-      evidenceId: ev.evidenceId || req.params.id,
-      metadata: {
-        fileName: ev.fileName || null,
-        telegramMessageId: ev.telegramMessageId || null,
-        thanaId: report.assignedThanaId || null,
-      },
-      timestamp: now,
-    });
+
 
     return res.json({ success: true });
   } catch (error: any) {
