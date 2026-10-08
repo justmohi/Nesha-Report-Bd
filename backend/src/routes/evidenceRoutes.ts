@@ -111,6 +111,31 @@ router.post('/upload', (req: Request, res: Response, next) => {
   }
 });
 
+// Retrieve authorized evidence metadata
+router.get('/:id/metadata', async (req: Request, res: Response) => {
+  try {
+    const snap = await getFirestore().doc(`evidence/${req.params.id}`).get();
+    if (!snap.exists) return res.status(404).json({ error: 'Evidence not found' });
+
+    const ev = snap.data() as any;
+    const reportSnap = await getFirestore().doc(`reports/${ev.reportId}`).get();
+    if (!reportSnap.exists) return res.status(404).json({ error: 'Report not found' });
+
+    const report = reportSnap.data() as any;
+    const user = req.user!;
+    if (user.role === 'PUBLIC_USER' && report.reporterId !== user.uid) {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+    if (user.role === 'POLICE_USER' && report.assignedThanaId !== user.assignedThanaId) {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+
+    return res.json({ success: true, evidence: ev });
+  } catch (error: any) {
+    return res.status(500).json({ error: error.message || 'Failed to load evidence metadata' });
+  }
+});
+
 // Stream authorized evidence securely to police / admin
 router.get('/:id/stream', async (req: Request, res: Response) => {
   const { id } = req.params;
