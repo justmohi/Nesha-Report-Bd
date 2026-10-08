@@ -91,15 +91,31 @@ export class TelegramStorageProvider implements StorageProvider {
   }
 
   async getEvidence(evidenceId: string): Promise<{ url: string; metadata: Evidence }> {
-    const res = await fetch(`${this.apiBase}/${evidenceId}`, { headers: await this.getAuthHeaders() });
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error(err.error || 'Failed to retrieve evidence');
+    const headers = await this.getAuthHeaders();
+    const metadataRes = await fetch(`${this.apiBase}/${evidenceId}/metadata`, { headers });
+    if (!metadataRes.ok) {
+      const err = await metadataRes.json().catch(() => ({}));
+      throw new Error(err.error || 'Failed to retrieve evidence metadata');
     }
-    const data = await res.json();
+
+    const { evidence } = await metadataRes.json();
+    if (!evidence?.telegramFileId) {
+      throw new Error('Evidence file is not available in secure storage.');
+    }
+
+    const streamRes = await fetch(
+      `${this.apiBase}/${evidenceId}/stream?fileId=${encodeURIComponent(evidence.telegramFileId)}`,
+      { headers }
+    );
+    if (!streamRes.ok) {
+      const err = await streamRes.text().catch(() => '');
+      throw new Error(err || 'Failed to retrieve evidence file');
+    }
+
+    const blob = await streamRes.blob();
     return {
-      url: data.streamUrl || `${this.apiBase}/${evidenceId}/stream`,
-      metadata: data.evidence,
+      url: URL.createObjectURL(blob),
+      metadata: evidence,
     };
   }
 
