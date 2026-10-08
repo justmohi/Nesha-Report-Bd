@@ -235,15 +235,9 @@ router.delete('/:id', requireRoles('POLICE_USER','SUPER_ADMIN'), async (req: Req
       return res.status(403).json({ error: 'Evidence is outside your assigned Thana' });
     }
 
-    const messageId = Number(req.query.messageId || ev.telegramMessageId);
-    if (messageId && telegramService.isConfigured()) {
-      try {
-        await telegramService.deleteMessage(messageId);
-      } catch (e) {
-        console.warn('Telegram message delete warning:', e);
-      }
-    }
-
+    // The evidence record is the authoritative Telegram message mapping.
+    // Never trust a client-supplied message ID for deletion.
+    const messageId = Number(ev.telegramMessageId);
     const now = new Date().toISOString();
     await db.runTransaction(async (tx) => {
       const currentEvidence = await tx.get(ref);
@@ -285,7 +279,13 @@ router.delete('/:id', requireRoles('POLICE_USER','SUPER_ADMIN'), async (req: Req
       });
     });
 
-
+    if (messageId && telegramService.isConfigured()) {
+      try {
+        await telegramService.deleteMessage(messageId);
+      } catch (e) {
+        console.warn('Telegram message delete warning:', e);
+      }
+    }
 
     return res.json({ success: true });
   } catch (error: any) {
