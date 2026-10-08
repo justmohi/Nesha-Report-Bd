@@ -454,6 +454,7 @@ export const ReportPage: React.FC<ReportPageProps> = ({ onNavigate }) => {
                 onChange={(e) => setSelectedDistrictId(e.target.value)}
                 className="w-full px-3.5 py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
               >
+                <option value="">{language === 'bn' ? 'জেলা নির্বাচন করুন' : 'Select district'}</option>
                 {districts.map((d) => (
                   <option key={d.id} value={d.id}>
                     {language === 'bn' ? d.nameBn : d.nameEn}
@@ -470,8 +471,10 @@ export const ReportPage: React.FC<ReportPageProps> = ({ onNavigate }) => {
               <select
                 value={selectedUpazilaId}
                 onChange={(e) => setSelectedUpazilaId(e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                disabled={!selectedDistrictId}
+                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 disabled:opacity-50"
               >
+                <option value="">{selectedDistrictId ? (language === 'bn' ? 'উপজেলা নির্বাচন করুন' : 'Select upazila') : (language === 'bn' ? 'আগে জেলা নির্বাচন করুন' : 'Select district first')}</option>
                 {upazilas.map((u) => (
                   <option key={u.id} value={u.id}>
                     {language === 'bn' ? u.nameBn : u.nameEn}
@@ -488,8 +491,10 @@ export const ReportPage: React.FC<ReportPageProps> = ({ onNavigate }) => {
               <select
                 value={selectedThanaId}
                 onChange={(e) => setSelectedThanaId(e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-800 border border-emerald-500/40 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 font-medium"
+                disabled={!selectedDistrictId}
+                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-800 border border-emerald-500/40 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 font-medium disabled:opacity-50"
               >
+                <option value="">{selectedDistrictId ? (language === 'bn' ? 'থানা নির্বাচন করুন' : 'Select police station') : (language === 'bn' ? 'আগে জেলা নির্বাচন করুন' : 'Select district first')}</option>
                 {thanas.map((th) => (
                   <option key={th.id} value={th.id}>
                     {language === 'bn' ? th.nameBn : th.nameEn} {th.code ? `(${th.code})` : ''}
