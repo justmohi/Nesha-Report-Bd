@@ -132,15 +132,43 @@ router.get('/:id/stream', async (req: Request, res: Response) => {
 
 // Delete evidence
 router.delete('/:id', requireRoles('POLICE_USER','SUPER_ADMIN'), async (req: Request, res: Response) => {
-  const messageId = parseInt(req.query.messageId as string, 10);
-  if (messageId && telegramService.isConfigured()) {
-    try {
-      await telegramService.deleteMessage(messageId);
-    } catch (e) {
-      console.warn('Telegram message delete warning:', e);
+  try {
+    const db = getFirestore();
+    const ref = db.doc(`evidence/${req.params.id}`);
+    const snap = await ref.get();
+    if (!snap.exists) return res.status(404).json({ error: 'Evidence not found' });
+
+    const ev = snap.data() as any;
+    const reportRef = db.doc(`reports/${ev.reportId}`);
+    const reportSnap = await reportRef.get();
+    if (!reportSnap.exists) return res.status(404).json({ error: 'Report not found' });
+
+    const report = reportSnap.data() as any;
+    const user = req.user!;
+    if (user.role === 'POLICE_USER' && report.assignedThanaId !== user.assignedThanaId) {
+      return res.status(403).json({ error: 'Evidence is outside your assigned Thana' });
     }
+
+    const messageId = Number(req.query.messageId || ev.telegramMessageId);
+    if (messageId && telegramService.isConfigured()) {
+      try {
+        await telegramService.deleteMessage(messageId);
+      } catch (e) {
+        console.warn('Telegram message delete warning:', e);
+      }
+    }
+
+    await ref.delete();
+    await reportRef.update({
+      evidenceIds: (report.evidenceIds || []).filter((id: string) => id !== ev.evidenceId && id !== req.params.id),
+      updatedAt: new Date().toISOString(),
+    });
+
+    return res.json({ success: true });
+  } catch (error: any) {
+    console.error('Evidence delete error:', error);
+    return res.status(500).json({ error: error.message || 'Failed to delete evidence' });
   }
-  return res.json({ success: true });
 });
 
 export default router;
