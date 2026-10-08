@@ -154,6 +154,9 @@ router.get('/:id/stream', async (req: Request, res: Response) => {
   if (!fileId) {
     return res.status(400).json({ error: 'Missing telegram file identifier' });
   }
+  if (String(ev.telegramFileId || '') !== fileId) {
+    return res.status(403).json({ error: 'Evidence file mismatch' });
+  }
 
   try {
     const fileInfo = await telegramService.getFile(fileId);
