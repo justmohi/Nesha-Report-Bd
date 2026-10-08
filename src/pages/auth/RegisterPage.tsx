@@ -30,7 +30,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
 
     setIsLoading(true);
     try {
-      await registerPublic(fullName, email, phone);
+      await registerPublic(fullName, email, phone, password);
       onNavigate('report');
     } catch (err: any) {
       setError(err.message || 'নিবন্ধন ব্যর্থ হয়েছে');
