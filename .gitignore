@@ -8,4 +8,4 @@ coverage/
 !.env.example
 
 .geo-cache/
-public/data/bd-geo/\n
+public/data/bd-geo/
