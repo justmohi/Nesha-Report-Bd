@@ -41,15 +41,15 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
 
   return (
     <div className="max-w-md mx-auto px-4 py-12">
-      <div className="p-6 sm:p-8 rounded-3xl bg-slate-900 border border-slate-800 shadow-2xl space-y-6">
+      <div className="p-6 sm:p-8 rounded-3xl bg-white border border-slate-200 shadow-2xl space-y-6">
         <div className="text-center space-y-2">
-          <div className="w-12 h-12 rounded-2xl bg-emerald-600/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 mx-auto">
+          <div className="w-12 h-12 rounded-2xl bg-emerald-600/10 border border-emerald-200 flex items-center justify-center text-[#006a4e] mx-auto">
             <UserCheck className="w-6 h-6" />
           </div>
-          <h1 className="text-2xl font-extrabold text-white">
+          <h1 className="text-2xl font-extrabold text-slate-900">
             {t('register')}
           </h1>
-          <p className="text-xs text-slate-400">
+          <p className="text-xs text-slate-500">
             {language === 'bn'
               ? 'নিরাপদ সমাজ গড়তে নাগরিক হিসেবে যুক্ত হোন'
               : 'Join as a responsible citizen informant'}
@@ -57,15 +57,15 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
         </div>
 
         {error && (
-          <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs flex items-center gap-2">
-            <AlertCircle className="w-4 h-4 flex-shrink-0 text-rose-400" />
+          <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-red-600 text-xs flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 flex-shrink-0 text-red-600" />
             <span>{error}</span>
           </div>
         )}
 
         <form onSubmit={handleRegister} className="space-y-4">
           <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+            <label className="block text-xs font-semibold text-slate-600 mb-1.5">
               {t('fullName')} *
             </label>
             <input
@@ -73,13 +73,13 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
               placeholder="তানভীর আহমেদ"
-              className="w-full px-4 py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              className="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-300 text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
               required
             />
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+            <label className="block text-xs font-semibold text-slate-600 mb-1.5">
               {t('phone')}
             </label>
             <input
@@ -87,12 +87,12 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
               placeholder="01711-234567"
-              className="w-full px-4 py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              className="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-300 text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+            <label className="block text-xs font-semibold text-slate-600 mb-1.5">
               {t('email')} *
             </label>
             <input
@@ -100,33 +100,33 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="citizen@example.com"
-              className="w-full px-4 py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              className="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-300 text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
               required
             />
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+            <label className="block text-xs font-semibold text-slate-600 mb-1.5">
               {language === 'bn' ? 'পাসওয়ার্ড' : 'Password'} *
             </label>
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              className="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-300 text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
               required
             />
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+            <label className="block text-xs font-semibold text-slate-600 mb-1.5">
               {language === 'bn' ? 'পাসওয়ার্ড নিশ্চিত করুন' : 'Confirm Password'} *
             </label>
             <input
               type="password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              className="w-full px-4 py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              className="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-300 text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
               required
             />
           </div>
@@ -134,7 +134,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm shadow-lg shadow-emerald-600/20 transition flex items-center justify-center gap-2 cursor-pointer"
+            className="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-slate-900 font-bold text-sm shadow-lg shadow-emerald-600/20 transition flex items-center justify-center gap-2 cursor-pointer"
           >
             {isLoading ? (
               <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -150,7 +150,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
         <div className="text-center pt-2">
           <button
             onClick={() => onNavigate('login')}
-            className="text-xs text-emerald-400 hover:text-emerald-300 font-semibold"
+            className="text-xs text-[#006a4e] hover:text-[#006a4e] font-semibold"
           >
             {language === 'bn'
               ? 'ইতিমধ্যে অ্যাকাউন্ট আছে? লগইন করুন'
