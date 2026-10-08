@@ -13,19 +13,22 @@ class DataService{
  async getDistricts():Promise<District[]>{const admin=await fetch('/data/bd-geo/admin.json').then(r=>r.json());return admin.districts.map((d:any)=>({id:d.id,nameEn:d.nameEn,nameBn:d.nameBn,division:d.divisionId||''}))}
  async getUpazilas(d?:string):Promise<Upazila[]>{const admin=await fetch('/data/bd-geo/admin.json').then(r=>r.json());return admin.upazilas.filter((u:any)=>!d||u.districtId===d).map((u:any)=>({id:u.id,districtId:u.districtId,nameEn:u.nameEn,nameBn:u.nameBn}))}
  async getThanas(_u?:string,d?:string):Promise<Thana[]>{
-   const stations=getPoliceStations();
-   const admin=await fetch('/data/bd-geo/admin.json').then(r=>r.json());
+   const [registryStations, admin]=await Promise.all([
+     this.geo<any>('police-stations.json').catch(() => []),
+     fetch('/data/bd-geo/admin.json').then(r=>r.json()),
+   ]);
+   const stations=[...getPoliceStations(),...registryStations];
    const district=admin.districts.find((x:any)=>x.id===d);
    if(!district)return [];
    const legacyIds=new Set([district.id,district.legacyId].filter(Boolean));
    const districtNames=new Set([district.nameEn,district.nameBn].filter(Boolean).map(normalizeName));
    const matched=stations.filter((station:any)=>{
      if(station.source==='BANGLADESH_POLICE') return districtNames.has(normalizeName(station.sourceDistrictNameEn||''));
-     return legacyIds.has(station.districtId);
+     return legacyIds.has(station.districtId) || (station.source==='ADDRESS_REGISTRY' && station.districtId===district.id);
    });
    const seen=new Set<string>();
    return matched.filter((station:any)=>{
-     const key=`${normalizeName(station.nameEn)}|${normalizeName(station.sourceDistrictNameEn||district.nameEn)}`;
+     const key=`${normalizeName(station.nameEn)}|${normalizeName(station.sourceDistrictNameEn||district.nameEn)}|${station.districtId||''}`;
      if(seen.has(key))return false;
      seen.add(key);
      return true;
