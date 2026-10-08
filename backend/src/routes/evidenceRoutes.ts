@@ -119,7 +119,7 @@ router.post('/upload', (req: Request, res: Response, next) => {
         tx.set(auditRef, {
           logId: auditRef.id,
           userId: uploadedBy,
-          userName: user.name || user.email || 'User',
+          userName: user.fullName || 'User',
           role: user.role,
           action: 'EVIDENCE_UPLOADED',
           reportId,
@@ -271,7 +271,7 @@ router.delete('/:id', requireRoles('POLICE_USER','SUPER_ADMIN'), async (req: Req
       tx.set(auditRef, {
         logId: auditRef.id,
         userId: user.uid,
-        userName: user.name || user.email || 'User',
+        userName: user.fullName || 'User',
         role: user.role,
         action: 'EVIDENCE_DELETED',
         reportId: currentEv.reportId,
