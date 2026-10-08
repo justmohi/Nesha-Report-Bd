@@ -114,25 +114,35 @@ export const ReportPage: React.FC<ReportPageProps> = ({ onNavigate }) => {
     }
   }, [selectedDistrictId]);
 
+  // Police stations are a separate jurisdiction layer from administrative Upazilas.
+  // They are filtered by District, while Union/Village follows the administrative Upazila hierarchy.
   useEffect(() => {
-    if (selectedUpazilaId) {
-      dataService.getThanas(selectedUpazilaId).then((list) => {
+    if (selectedDistrictId) {
+      dataService.getThanas(undefined, selectedDistrictId).then((list) => {
         setThanas(list);
         if (list.length > 0 && !list.find((t) => t.id === selectedThanaId)) {
           setSelectedThanaId(list[0].id);
+        } else if (list.length === 0) {
+          setSelectedThanaId('');
         }
       });
+    } else {
+      setThanas([]);
+      setSelectedThanaId('');
     }
-  }, [selectedUpazilaId]);
+  }, [selectedDistrictId]);
 
   useEffect(() => {
-    if (selectedThanaId) {
-      dataService.getUnions(selectedThanaId).then((list) => {
+    if (selectedUpazilaId) {
+      dataService.getUnions(selectedUpazilaId).then((list) => {
         setUnions(list);
         setSelectedUnionId(list.length > 0 ? list[0].id : '');
       });
+    } else {
+      setUnions([]);
+      setSelectedUnionId('');
     }
-  }, [selectedThanaId]);
+  }, [selectedUpazilaId]);
 
   useEffect(() => {
     if (selectedUnionId) {
@@ -465,7 +475,7 @@ export const ReportPage: React.FC<ReportPageProps> = ({ onNavigate }) => {
             {/* Thana (Assigned) */}
             <div>
               <label className="block text-xs font-semibold text-emerald-400 mb-1.5 flex items-center gap-1">
-                <span>{language === 'bn' ? 'উপজেলা / থানা' : 'Upazila / Thana'} *</span>
+                <span>{language === 'bn' ? 'দায়িত্বপ্রাপ্ত থানা' : 'Assigned Police Station'} *</span>
               </label>
               <select
                 value={selectedThanaId}
