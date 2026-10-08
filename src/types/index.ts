@@ -33,7 +33,7 @@ export interface AuditLog { id:string; logId:string; userId:string; userName?:st
 export interface NotificationItem { id:string; notificationId:string; targetThanaId?:string; recipientId?:string; title:string; message:string; reportId?:string; isRead:boolean; createdAt:string; }
 export interface District { id:string; nameEn:string; nameBn:string; division:string; }
 export interface Upazila { id:string; districtId:string; nameEn:string; nameBn:string; }
-export type ThanaSource = 'BANGLADESH_POLICE' | 'LEGACY_GEO';
+export type ThanaSource = 'BANGLADESH_POLICE' | 'ADDRESS_REGISTRY' | 'LEGACY_GEO';
 export interface Thana { id:string; upazilaId?:string; districtId:string; nameEn:string; nameBn:string; code?:string; source?:ThanaSource; policeUnit?:string; sourceDistrictNameEn?:string; sourceUrl?:string; }
 export interface UnionItem { id:string; upazilaId:string; nameEn:string; nameBn:string; }
 export interface VillageItem { id:string; unionId:string; nameEn:string; nameBn:string; }
