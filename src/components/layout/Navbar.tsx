@@ -6,7 +6,6 @@ import LanguageSwitcher from '../common/LanguageSwitcher';
 import {
   Shield,
   FileText,
-  UserCheck,
   Search,
   Bell,
   Menu,
