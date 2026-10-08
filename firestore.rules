@@ -1,0 +1,250 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Default Deny Catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // Check if user is registered Super Admin
+    function isAdmin() {
+      return isSignedIn() && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+
+    // Retrieve officer record for current user
+    function getPoliceDoc() {
+      return get(/databases/$(database)/documents/policeUsers/$(request.auth.uid)).data;
+    }
+
+    // Check if user is an active police officer
+    function isPolice() {
+      return isSignedIn() &&
+        exists(/databases/$(database)/documents/policeUsers/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/policeUsers/$(request.auth.uid)).data.isActive == true;
+    }
+
+    // Check if police officer belongs to the assigned Thana
+    function isAssignedPolice(thanaId) {
+      return isPolice() && getPoliceDoc().assignedThanaId == thanaId;
+    }
+
+    // ==========================================
+    // Users Collection
+    // ==========================================
+    match /users/{userId} {
+      allow get: if isSignedIn() && (request.auth.uid == userId || isAdmin());
+      allow list: if isAdmin();
+      allow create: if isSignedIn() && request.auth.uid == userId &&
+        incoming().role == 'PUBLIC_USER' &&
+        incoming().uid == userId &&
+        incoming().keys().hasAll(['uid', 'fullName', 'email', 'role', 'createdAt']);
+      allow update: if isSignedIn() && (
+        (request.auth.uid == userId &&
+         incoming().role == existing().role &&
+         incoming().uid == existing().uid &&
+         incoming().diff(existing()).affectedKeys().hasOnly(['fullName', 'phoneNumber', 'updatedAt'])) ||
+        isAdmin()
+      );
+      allow delete: if isAdmin();
+    }
+
+    // ==========================================
+    // Police Users Collection (Admin managed)
+    // ==========================================
+    match /policeUsers/{policeId} {
+      allow get: if isSignedIn() && (request.auth.uid == policeId || isPolice() || isAdmin());
+      allow list: if isAdmin() || isPolice();
+      allow create, update, delete: if isAdmin();
+    }
+
+    // ==========================================
+    // Admins Collection
+    // ==========================================
+    match /admins/{adminId} {
+      allow get: if isSignedIn() && (request.auth.uid == adminId || isAdmin());
+      allow list: if isAdmin();
+      allow create, update, delete: if isAdmin();
+    }
+
+    // ==========================================
+    // Reports Collection
+    // ==========================================
+    match /reports/{reportId} {
+      // Public user can read ONLY their own report. Police can read ONLY if assigned to their Thana. Admin can read all.
+      allow get: if isSignedIn() && (
+        existing().reporterId == request.auth.uid ||
+        isAssignedPolice(existing().assignedThanaId) ||
+        isAdmin()
+      );
+
+      // Query listings enforced by security rules
+      allow list: if isSignedIn() && (
+        (resource.data.reporterId == request.auth.uid) ||
+        (isPolice() && resource.data.assignedThanaId == getPoliceDoc().assignedThanaId) ||
+        isAdmin()
+      );
+
+      // Creation by authenticated citizen
+      allow create: if isSignedIn() &&
+        incoming().reporterId == request.auth.uid &&
+        incoming().status == 'SUBMITTED' &&
+        incoming().keys().hasAll(['reportId', 'reporterId', 'incidentType', 'description', 'assignedThanaId', 'status', 'createdAt']) &&
+        incoming().reportId == reportId;
+
+      // Update actions:
+      // Police can update status and investigation notes for their assigned Thana
+      // Reporter cannot tamper with report once submitted
+      allow update: if isSignedIn() && (
+        isAdmin() ||
+        (
+          isAssignedPolice(existing().assignedThanaId) &&
+          incoming().reporterId == existing().reporterId &&
+          incoming().reportId == existing().reportId &&
+          incoming().assignedThanaId == existing().assignedThanaId &&
+          incoming().diff(existing()).affectedKeys().hasOnly(['status', 'policeNotes', 'actionTakenDetails', 'updatedAt'])
+        )
+      );
+
+      allow delete: if isAdmin();
+    }
+
+    // ==========================================
+    // Reported Person Collection (Strictly Confidential)
+    // NEVER accessible by general public or other citizens
+    // ==========================================
+    match /reportedPersons/{personId} {
+      allow get: if isSignedIn() && (
+        isAdmin() ||
+        (
+          isPolice() &&
+          exists(/databases/$(database)/documents/reports/$(existing().reportId)) &&
+          get(/databases/$(database)/documents/reports/$(existing().reportId)).data.assignedThanaId == getPoliceDoc().assignedThanaId
+        )
+      );
+
+      allow list: if isAdmin() || isPolice();
+
+      allow create: if isSignedIn() &&
+        exists(/databases/$(database)/documents/reports/$(incoming().reportId)) &&
+        get(/databases/$(database)/documents/reports/$(incoming().reportId)).data.reporterId == request.auth.uid;
+
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // ==========================================
+    // Evidence Metadata Collection
+    // ==========================================
+    match /evidence/{evidenceId} {
+      allow get: if isSignedIn() && (
+        existing().uploadedBy == request.auth.uid ||
+        isAdmin() ||
+        (
+          isPolice() &&
+          exists(/databases/$(database)/documents/reports/$(existing().reportId)) &&
+          get(/databases/$(database)/documents/reports/$(existing().reportId)).data.assignedThanaId == getPoliceDoc().assignedThanaId
+        )
+      );
+
+      allow list: if isSignedIn() && (
+        resource.data.uploadedBy == request.auth.uid ||
+        isAdmin() ||
+        isPolice()
+      );
+
+      allow create: if isSignedIn() &&
+        incoming().uploadedBy == request.auth.uid &&
+        incoming().evidenceId == evidenceId;
+
+      allow update: if isAdmin();
+      allow delete: if isAdmin() || (isSignedIn() && existing().uploadedBy == request.auth.uid);
+    }
+
+    // ==========================================
+    // Audit Logs Collection (Append-only / Super Admin read)
+    // ==========================================
+    match /auditLogs/{logId} {
+      allow get, list: if isAdmin();
+      allow create: if isSignedIn() &&
+        incoming().logId == logId &&
+        incoming().userId == request.auth.uid;
+      allow update, delete: if false; // Immutable audit trail
+    }
+
+    // ==========================================
+    // Notifications Collection
+    // ==========================================
+    match /notifications/{notificationId} {
+      allow get, list: if isSignedIn() && (
+        (isPolice() && resource.data.targetThanaId == getPoliceDoc().assignedThanaId) ||
+        resource.data.recipientId == request.auth.uid ||
+        isAdmin()
+      );
+      allow create: if isSignedIn();
+      allow update: if isSignedIn() && (
+        (isPolice() && existing().targetThanaId == getPoliceDoc().assignedThanaId &&
+         incoming().diff(existing()).affectedKeys().hasOnly(['isRead'])) ||
+        (existing().recipientId == request.auth.uid &&
+         incoming().diff(existing()).affectedKeys().hasOnly(['isRead'])) ||
+        isAdmin()
+      );
+      allow delete: if isAdmin();
+    }
+
+    // ==========================================
+    // Public Reference Data (Districts, Upazilas, Thanas, Unions, Categories, Aggregated Statistics)
+    // ==========================================
+    match /districts/{districtId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /upazilas/{upazilaId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /thanas/{thanaId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /unions/{unionId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /categories/{categoryId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /publicStatistics/{statId} {
+      allow read: if true;
+      allow write: if isAdmin() || isPolice();
+    }
+
+    match /settings/{settingId} {
+      allow read: if isAdmin();
+      allow write: if isAdmin();
+    }
+  }
+}

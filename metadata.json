@@ -1,0 +1,6 @@
+{
+  "name": "Nesha Report BD",
+  "description": "Confidential drug-related incident reporting and law-enforcement information management platform for Bangladesh.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

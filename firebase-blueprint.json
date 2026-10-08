@@ -1,0 +1,169 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "Public citizen user profile",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "Firebase Auth UID" },
+        "fullName": { "type": "string", "maxLength": 100, "description": "Full legal or preferred name" },
+        "phoneNumber": { "type": "string", "maxLength": 20, "pattern": "^[0-9+\\- ]*$", "description": "Contact phone number" },
+        "email": { "type": "string", "format": "email", "description": "User email address" },
+        "role": { "type": "string", "enum": ["PUBLIC_USER", "POLICE_USER", "SUPER_ADMIN"], "description": "User access role" },
+        "createdAt": { "type": "string", "description": "ISO timestamp" }
+      },
+      "required": ["uid", "fullName", "email", "role", "createdAt"]
+    },
+    "PoliceUser": {
+      "title": "PoliceUser",
+      "description": "Authorized Law Enforcement Officer profile tied to a specific Thana",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "Firebase Auth UID" },
+        "fullName": { "type": "string", "maxLength": 100, "description": "Officer name" },
+        "badgeNumber": { "type": "string", "maxLength": 50, "description": "Police badge number" },
+        "rank": { "type": "string", "maxLength": 50, "description": "Officer rank (e.g., SI, OC, Inspector)" },
+        "assignedDistrictId": { "type": "string", "maxLength": 50, "description": "District jurisdiction" },
+        "assignedThanaId": { "type": "string", "maxLength": 50, "description": "Thana station jurisdiction ID" },
+        "thanaNameBn": { "type": "string", "maxLength": 100, "description": "Thana name in Bangla" },
+        "thanaNameEn": { "type": "string", "maxLength": 100, "description": "Thana name in English" },
+        "isActive": { "type": "boolean", "description": "Account active status" },
+        "email": { "type": "string", "format": "email", "description": "Official police email" },
+        "createdAt": { "type": "string", "description": "ISO timestamp" }
+      },
+      "required": ["uid", "fullName", "assignedThanaId", "isActive", "email", "createdAt"]
+    },
+    "Report": {
+      "title": "Report",
+      "description": "Confidential drug-related incident report",
+      "type": "object",
+      "properties": {
+        "reportId": { "type": "string", "maxLength": 64, "description": "Unique report reference ID" },
+        "reporterId": { "type": "string", "maxLength": 128, "description": "UID of submitting citizen or anonymous token" },
+        "reporterName": { "type": "string", "maxLength": 100, "description": "Confidential reporter name" },
+        "reporterPhone": { "type": "string", "maxLength": 20, "description": "Confidential reporter phone" },
+        "jurisdiction": { "type": "object", "description": "Jurisdiction hierarchy" },
+        "incidentType": { "type": "string", "maxLength": 50, "description": "Drug incident category" },
+        "description": { "type": "string", "maxLength": 4000, "description": "Detailed incident narrative" },
+        "incidentDate": { "type": "string", "maxLength": 20, "description": "YYYY-MM-DD" },
+        "incidentTime": { "type": "string", "maxLength": 20, "description": "HH:MM" },
+        "location": { "type": "object", "description": "Coordinates and general location" },
+        "hasReportedPerson": { "type": "boolean", "description": "Whether person details are attached" },
+        "reportedPersonId": { "type": "string", "maxLength": 64, "description": "Reference to confidential person doc" },
+        "evidenceIds": { "type": "array", "description": "List of evidence identifiers" },
+        "assignedThanaId": { "type": "string", "maxLength": 50, "description": "Target Thana station ID" },
+        "status": {
+          "type": "string",
+          "enum": ["SUBMITTED", "UNDER_REVIEW", "VERIFIED", "REJECTED", "ACTION_TAKEN", "CLOSED"],
+          "description": "Workflow verification and enforcement status"
+        },
+        "policeNotes": { "type": "string", "maxLength": 5000, "description": "Internal law enforcement investigation notes" },
+        "actionTakenDetails": { "type": "string", "maxLength": 3000, "description": "Official actions executed by police" },
+        "createdAt": { "type": "string", "description": "Creation timestamp" },
+        "updatedAt": { "type": "string", "description": "Update timestamp" }
+      },
+      "required": ["reportId", "reporterId", "incidentType", "description", "assignedThanaId", "status", "createdAt"]
+    },
+    "ReportedPerson": {
+      "title": "ReportedPerson",
+      "description": "Strictly confidential person information attached to a report",
+      "type": "object",
+      "properties": {
+        "personId": { "type": "string", "maxLength": 64, "description": "Unique person ID" },
+        "reportId": { "type": "string", "maxLength": 64, "description": "Associated report ID" },
+        "name": { "type": "string", "maxLength": 100, "description": "Suspected person name" },
+        "alias": { "type": "string", "maxLength": 100, "description": "Known alias / nickname" },
+        "approximateAge": { "type": "number", "description": "Approximate age in years" },
+        "gender": { "type": "string", "maxLength": 20, "description": "Gender identification" },
+        "description": { "type": "string", "maxLength": 2000, "description": "Physical description or hallmarks" },
+        "knownArea": { "type": "string", "maxLength": 300, "description": "Known frequented area / hangout" },
+        "additionalNotes": { "type": "string", "maxLength": 2000, "description": "Additional confidential details" },
+        "photoEvidenceId": { "type": "string", "maxLength": 64, "description": "Telegram evidence ID for photo" },
+        "createdAt": { "type": "string", "description": "Timestamp" }
+      },
+      "required": ["personId", "reportId", "createdAt"]
+    },
+    "Evidence": {
+      "title": "Evidence",
+      "description": "Private evidence metadata stored on Telegram private channel",
+      "type": "object",
+      "properties": {
+        "evidenceId": { "type": "string", "maxLength": 64, "description": "Unique evidence ID" },
+        "reportId": { "type": "string", "maxLength": 64, "description": "Linked report ID" },
+        "provider": { "type": "string", "enum": ["telegram"], "description": "Storage backend provider" },
+        "telegramMessageId": { "type": "number", "description": "Message ID in private Telegram channel" },
+        "telegramFileId": { "type": "string", "maxLength": 255, "description": "Encrypted Telegram file ID" },
+        "fileType": { "type": "string", "maxLength": 50, "description": "MIME type (image, video, document)" },
+        "fileName": { "type": "string", "maxLength": 255, "description": "Original file name" },
+        "fileSize": { "type": "number", "description": "File size in bytes" },
+        "uploadedBy": { "type": "string", "maxLength": 128, "description": "Uploader UID" },
+        "uploadedAt": { "type": "string", "description": "Upload timestamp" }
+      },
+      "required": ["evidenceId", "reportId", "provider", "fileType", "uploadedBy", "uploadedAt"]
+    },
+    "AuditLog": {
+      "title": "AuditLog",
+      "description": "Immutable security and investigation audit trail",
+      "type": "object",
+      "properties": {
+        "logId": { "type": "string", "maxLength": 64, "description": "Unique audit log ID" },
+        "userId": { "type": "string", "maxLength": 128, "description": "User UID who took the action" },
+        "userName": { "type": "string", "maxLength": 100, "description": "Name or handle" },
+        "role": { "type": "string", "description": "Role at time of action" },
+        "action": { "type": "string", "maxLength": 100, "description": "Action performed (e.g. REPORT_CREATED, EVIDENCE_ACCESSED, STATUS_UPDATED)" },
+        "reportId": { "type": "string", "maxLength": 64, "description": "Target report ID if applicable" },
+        "evidenceId": { "type": "string", "maxLength": 64, "description": "Target evidence ID if applicable" },
+        "ipAddress": { "type": "string", "maxLength": 45, "description": "Request IP address" },
+        "timestamp": { "type": "string", "description": "Timestamp of action" },
+        "metadata": { "type": "object", "description": "Additional context details" }
+      },
+      "required": ["logId", "userId", "role", "action", "timestamp"]
+    },
+    "Notification": {
+      "title": "Notification",
+      "description": "Station or user dispatch alerts",
+      "type": "object",
+      "properties": {
+        "notificationId": { "type": "string", "maxLength": 64, "description": "Unique ID" },
+        "targetThanaId": { "type": "string", "maxLength": 50, "description": "Target police Thana station" },
+        "recipientId": { "type": "string", "maxLength": 128, "description": "Specific recipient UID" },
+        "title": { "type": "string", "maxLength": 200, "description": "Alert title" },
+        "message": { "type": "string", "maxLength": 1000, "description": "Alert message body" },
+        "reportId": { "type": "string", "maxLength": 64, "description": "Linked incident report ID" },
+        "isRead": { "type": "boolean", "description": "Read status" },
+        "createdAt": { "type": "string", "description": "Dispatch timestamp" }
+      },
+      "required": ["notificationId", "title", "message", "isRead", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/User" },
+      "description": "Public users registered on the platform"
+    },
+    "/policeUsers/{policeId}": {
+      "schema": { "$ref": "#/entities/PoliceUser" },
+      "description": "Authorized law enforcement personnel records"
+    },
+    "/reports/{reportId}": {
+      "schema": { "$ref": "#/entities/Report" },
+      "description": "Confidential incident reports with Thana-level access control"
+    },
+    "/reportedPersons/{personId}": {
+      "schema": { "$ref": "#/entities/ReportedPerson" },
+      "description": "Confidential suspected individual data - never exposed to public"
+    },
+    "/evidence/{evidenceId}": {
+      "schema": { "$ref": "#/entities/Evidence" },
+      "description": "Evidence metadata referencing private Telegram channel messages"
+    },
+    "/auditLogs/{logId}": {
+      "schema": { "$ref": "#/entities/AuditLog" },
+      "description": "Immutable security and compliance audit trails"
+    },
+    "/notifications/{notificationId}": {
+      "schema": { "$ref": "#/entities/Notification" },
+      "description": "Thana station dispatch notifications"
+    }
+  }
+}
