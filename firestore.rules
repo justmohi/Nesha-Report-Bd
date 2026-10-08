@@ -29,6 +29,17 @@ service cloud.firestore {
       return isSignedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid)) && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'SUPER_ADMIN';
     }
 
+    // Check the role stored in the authoritative user profile.
+    function hasUserRole(role) {
+      return isSignedIn() &&
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == role;
+    }
+
+    function isPublicUser() {
+      return hasUserRole('PUBLIC_USER');
+    }
+
     // Retrieve officer record for current user
     function getPoliceDoc() {
       return get(/databases/$(database)/documents/policeUsers/$(request.auth.uid)).data;
@@ -173,9 +184,43 @@ service cloud.firestore {
     // ==========================================
     match /auditLogs/{logId} {
       allow get, list: if isAdmin();
+
+      // Clients may append only an audit event for themselves, with a role
+      // matching the authoritative users profile. If the event references a
+      // report/evidence, it must belong to a report the caller is allowed to access.
       allow create: if isSignedIn() &&
         incoming().logId == logId &&
-        incoming().userId == request.auth.uid;
+        incoming().userId == request.auth.uid &&
+        incoming().role == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role &&
+        (
+          !incoming().keys().hasAny(['reportId']) ||
+          (
+            exists(/databases/$(database)/documents/reports/$(incoming().reportId)) &&
+            (
+              isAdmin() ||
+              (isPublicUser() &&
+                get(/databases/$(database)/documents/reports/$(incoming().reportId)).data.reporterId == request.auth.uid) ||
+              (isPolice() &&
+                get(/databases/$(database)/documents/reports/$(incoming().reportId)).data.assignedThanaId == getPoliceDoc().assignedThanaId)
+            )
+          )
+        ) &&
+        (
+          !incoming().keys().hasAny(['evidenceId']) ||
+          (
+            exists(/databases/$(database)/documents/evidence/$(incoming().evidenceId)) &&
+            (
+              isAdmin() ||
+              get(/databases/$(database)/documents/evidence/$(incoming().evidenceId)).data.uploadedBy == request.auth.uid ||
+              (
+                isPolice() &&
+                exists(/databases/$(database)/documents/reports/$(get(/databases/$(database)/documents/evidence/$(incoming().evidenceId)).data.reportId)) &&
+                get(/databases/$(database)/documents/reports/$(get(/databases/$(database)/documents/evidence/$(incoming().evidenceId)).data.reportId)).data.assignedThanaId == getPoliceDoc().assignedThanaId
+              )
+            )
+          )
+        );
+
       allow update, delete: if false; // Immutable audit trail
     }
 
@@ -188,7 +233,29 @@ service cloud.firestore {
         resource.data.recipientId == request.auth.uid ||
         isAdmin()
       );
-      allow create: if isSignedIn();
+
+      // A notification must be tied to an authorized workflow:
+      // citizen -> assigned police station, or police -> the report owner.
+      allow create: if isSignedIn() && (
+        isAdmin() ||
+        (
+          isPublicUser() &&
+          incoming().keys().hasAll(['reportId', 'targetThanaId']) &&
+          !incoming().keys().hasAny(['recipientId']) &&
+          exists(/databases/$(database)/documents/reports/$(incoming().reportId)) &&
+          get(/databases/$(database)/documents/reports/$(incoming().reportId)).data.reporterId == request.auth.uid &&
+          incoming().targetThanaId == get(/databases/$(database)/documents/reports/$(incoming().reportId)).data.assignedThanaId
+        ) ||
+        (
+          isPolice() &&
+          incoming().keys().hasAll(['reportId', 'recipientId']) &&
+          !incoming().keys().hasAny(['targetThanaId']) &&
+          exists(/databases/$(database)/documents/reports/$(incoming().reportId)) &&
+          get(/databases/$(database)/documents/reports/$(incoming().reportId)).data.assignedThanaId == getPoliceDoc().assignedThanaId &&
+          incoming().recipientId == get(/databases/$(database)/documents/reports/$(incoming().reportId)).data.reporterId
+        )
+      );
+
       allow update: if isSignedIn() && (
         (isPolice() && existing().targetThanaId == getPoliceDoc().assignedThanaId &&
          incoming().diff(existing()).affectedKeys().hasOnly(['isRead'])) ||
@@ -229,7 +296,7 @@ service cloud.firestore {
 
     match /publicStatistics/{statId} {
       allow read: if true;
-      allow write: if isAdmin() || isPolice();
+      allow write: if isAdmin();
     }
 
     match /settings/{settingId} {
