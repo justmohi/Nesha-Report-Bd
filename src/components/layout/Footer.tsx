@@ -188,9 +188,9 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
           </div>
           <div className="flex items-center gap-4 text-[11px]">
             <span className="flex items-center gap-1 text-[#006a4e]">
-              <CheckCircle2 className="w-3.5 h-3.5" /> End-to-End Confidential
+              <CheckCircle2 className="w-3.5 h-3.5" /> Confidential reporting
             </span>
-            <span>GDPR & Privacy Compliant</span>
+            <span>Privacy-focused service</span>
           </div>
         </div>
       </div>
