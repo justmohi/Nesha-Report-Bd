@@ -95,68 +95,75 @@ export const ReportPage: React.FC<ReportPageProps> = ({ onNavigate }) => {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [createdReport, setCreatedReport] = useState<{ id: string; reportId: string; pin: string } | null>(null);
 
-  // Load Jurisdictions
+  // Load jurisdictions. Each level is explicitly selected by the user.
+  // Changing a parent clears all dependent selections to prevent stale jurisdiction data.
   useEffect(() => {
     dataService.getDistricts().then((list) => {
       setDistricts(list);
-      if (list.length > 0) setSelectedDistrictId((current) => list.some(d => d.id === current) ? current : list[0].id);
+      setSelectedDistrictId('');
+      setUpazilas([]);
+      setThanas([]);
+      setUnions([]);
+      setVillages([]);
+      setSelectedUpazilaId('');
+      setSelectedThanaId('');
+      setSelectedUnionId('');
+      setSelectedVillageId('');
+      setVillageArea('');
     });
   }, []);
 
   useEffect(() => {
-    if (selectedDistrictId) {
-      dataService.getUpazilas(selectedDistrictId).then((list) => {
-        setUpazilas(list);
-        if (list.length > 0 && !list.find((u) => u.id === selectedUpazilaId)) {
-          setSelectedUpazilaId(list[0].id);
-        }
-      });
-    }
-  }, [selectedDistrictId]);
+    setSelectedUpazilaId('');
+    setSelectedThanaId('');
+    setSelectedUnionId('');
+    setSelectedVillageId('');
+    setVillageArea('');
+    setUnions([]);
+    setVillages([]);
 
-  // Police stations are a separate jurisdiction layer from administrative Upazilas.
-  // They are filtered by District, while Union/Village follows the administrative Upazila hierarchy.
-  useEffect(() => {
-    if (selectedDistrictId) {
-      dataService.getThanas(undefined, selectedDistrictId).then((list) => {
-        setThanas(list);
-        if (list.length > 0 && !list.find((t) => t.id === selectedThanaId)) {
-          setSelectedThanaId(list[0].id);
-        } else if (list.length === 0) {
-          setSelectedThanaId('');
-        }
-      });
-    } else {
+    if (!selectedDistrictId) {
+      setUpazilas([]);
       setThanas([]);
-      setSelectedThanaId('');
+      return;
     }
+
+    Promise.all([
+      dataService.getUpazilas(selectedDistrictId),
+      dataService.getThanas(undefined, selectedDistrictId),
+    ]).then(([upazilaList, thanaList]) => {
+      setUpazilas(upazilaList);
+      setThanas(thanaList);
+    });
   }, [selectedDistrictId]);
 
+  // Union/Village follows the administrative Upazila, not the police station.
   useEffect(() => {
-    if (selectedUpazilaId) {
-      dataService.getUnions(selectedUpazilaId).then((list) => {
-        setUnions(list);
-        setSelectedUnionId(list.length > 0 ? list[0].id : '');
-      });
-    } else {
+    setSelectedUnionId('');
+    setSelectedVillageId('');
+    setVillageArea('');
+    setVillages([]);
+
+    if (!selectedUpazilaId) {
       setUnions([]);
-      setSelectedUnionId('');
+      return;
     }
+
+    dataService.getUnions(selectedUpazilaId).then((list) => setUnions(list));
   }, [selectedUpazilaId]);
 
   useEffect(() => {
-    if (selectedUnionId) {
-      dataService.getVillages(selectedUnionId).then((list) => {
-        setVillages(list);
-        setSelectedVillageId(list.length > 0 ? list[0].id : '');
-        setVillageArea(list.length > 0 ? (language === 'bn' ? list[0].nameBn : list[0].nameEn) : '');
-      });
-    } else {
+    setSelectedVillageId('');
+    setVillageArea('');
+
+    if (!selectedUnionId) {
       setVillages([]);
-      setSelectedVillageId('');
-      setVillageArea('');
+      return;
     }
-  }, [selectedUnionId, language]);
+
+    dataService.getVillages(selectedUnionId).then((list) => setVillages(list));
+  }, [selectedUnionId]);
+
 
   // GPS Acquisition
   const handleDetectGPS = () => {
