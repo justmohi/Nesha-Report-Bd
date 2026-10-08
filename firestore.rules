@@ -81,7 +81,7 @@ service cloud.firestore {
     // Police Users Collection (Admin managed)
     // ==========================================
     match /policeUsers/{policeId} {
-      allow get: if isSignedIn() && (request.auth.uid == policeId || isPolice() || isAdmin());
+      allow get: if isSignedIn() && (request.auth.uid == policeId || isAdmin());
       allow list: if isAdmin();
       allow create, update, delete: if isAdmin();
     }
