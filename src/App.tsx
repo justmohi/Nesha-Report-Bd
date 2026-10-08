@@ -102,11 +102,11 @@ function AppContent() {
             onBack={() => navigate('police-reports')}
             onNavigateLogin={() => navigate('login')}
           >
-            selectedReportId ? (
+            {selectedReportId ? (
               <PoliceReportDetailPage reportId={selectedReportId} onNavigate={navigate} />
             ) : (
               <PoliceDashboard onNavigate={navigate} />
-            )
+            )}
           </RoleGuard>
         );
       case 'police-map':
