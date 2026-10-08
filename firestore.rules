@@ -136,7 +136,7 @@ service cloud.firestore {
         )
       );
 
-      allow list: if isAdmin() || isPolice();
+      allow list: if isAdmin();
 
       allow create: if isSignedIn() &&
         exists(/databases/$(database)/documents/reports/$(incoming().reportId)) &&
