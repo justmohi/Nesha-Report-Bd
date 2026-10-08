@@ -6,4 +6,6 @@ coverage/
 *.log
 .env*
 !.env.example
-\n.geo-cache/\npublic/data/bd-geo/\n
+
+.geo-cache/
+public/data/bd-geo/\n
