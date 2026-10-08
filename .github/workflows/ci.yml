@@ -2,13 +2,20 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
   pull_request:
-    branches: [main]
+    branches:
+      - main
+
+permissions:
+  contents: read
 
 jobs:
   validate:
+    name: Validate
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -17,9 +24,12 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 24.12.0
+          cache: npm
 
       - name: Install archive tools
-        run: sudo apt-get update && sudo apt-get install -y zstd
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y zstd
 
       - name: Install dependencies
         run: npm install --no-audit --no-fund
@@ -31,4 +41,29 @@ jobs:
         run: npm run build
 
       - name: Verify Bangladesh geography coverage
-        run: node -e "const fs=require('fs'); const m=JSON.parse(fs.readFileSync('public/data/bd-geo/manifest.json','utf8')); if(m.counts.divisions!==8 || m.counts.districts!==64 || m.counts.upazilas<490 || m.counts.unions<4700 || m.counts.villages<90000) throw new Error('Unexpected Bangladesh geography coverage: '+JSON.stringify(m.counts)); console.log(m.counts);"
+        run: |
+          node <<'NODE'
+          const fs = require('fs');
+          const manifest = JSON.parse(fs.readFileSync('public/data/bd-geo/manifest.json', 'utf8'));
+          const expected = {
+            source: 'montasim/bangladesh-location-registry',
+            version: '2026.08.04',
+            archiveSha256: '9b76179403d735231604aa460031b29b1a60123112f6ea5b27996269c1cd604c',
+          };
+          for (const [key, value] of Object.entries(expected)) {
+            if (manifest[key] !== value) {
+              throw new Error(`Unexpected geography manifest ${key}: ${manifest[key]}`);
+            }
+          }
+          const counts = manifest.counts || {};
+          if (
+            counts.divisions !== 8 ||
+            counts.districts !== 64 ||
+            counts.upazilas < 490 ||
+            counts.unions < 4700 ||
+            counts.villages < 90000
+          ) {
+            throw new Error('Unexpected Bangladesh geography coverage: ' + JSON.stringify(counts));
+          }
+          console.log('Bangladesh geography coverage:', counts);
+          NODE
