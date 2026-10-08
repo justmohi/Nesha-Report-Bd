@@ -71,7 +71,7 @@ service cloud.firestore {
     // ==========================================
     match /policeUsers/{policeId} {
       allow get: if isSignedIn() && (request.auth.uid == policeId || isPolice() || isAdmin());
-      allow list: if isAdmin() || isPolice();
+      allow list: if isAdmin();
       allow create, update, delete: if isAdmin();
     }
 
