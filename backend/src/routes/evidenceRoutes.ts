@@ -51,8 +51,24 @@ router.post('/upload', (req: Request, res: Response, next) => {
       return res.status(400).json({ error: 'No evidence file provided' });
     }
 
+    if (!telegramService.isConfigured()) {
+      return res.status(503).json({
+        error: 'Evidence storage is temporarily unavailable. Telegram secure storage is not configured.',
+      });
+    }
+
     const mime = file.mimetype;
     const originalName = file.originalname || 'evidence_file';
+    const allowedMime =
+      mime.startsWith('image/') ||
+      mime.startsWith('video/') ||
+      mime === 'application/pdf' ||
+      mime === 'text/plain';
+
+    if (!allowedMime) {
+      return res.status(415).json({ error: 'Unsupported evidence file type.' });
+    }
+
     let telegramResult: any = null;
 
     if (telegramService.isConfigured()) {
