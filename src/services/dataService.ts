@@ -1,4 +1,4 @@
-import{Report,ReportedPerson,Evidence,AuditLog,NotificationItem,PoliceUser,District,Upazila,Thana,UnionItem,VillageItem,PublicStatistics,ReportStatus,UserRole}from'../types';
+import{Report,ReportedPerson,Evidence,AuditLog,NotificationItem,PoliceUser,District,Upazila,Thana,UnionItem,VillageItem,PublicStatistics,ReportStatus,UserRole,HomeBanner}from'../types';
 import{db,isFirebaseConfigured,auth}from'../lib/firebase';
 import{collection,doc,getDoc,getDocs,setDoc,updateDoc,writeBatch,query,where,orderBy,limit}from'firebase/firestore';
 import{getUpazilas as geoUpazilas}from'../data/bdGeoData';
@@ -53,6 +53,10 @@ class DataService{
  async getPoliceUsers():Promise<PoliceUser[]>{const s=await getDocs(query(collection(this.ready(),'policeUsers'),limit(500)));return s.docs.map(d=>d.data()as PoliceUser)}
  async createPoliceUser(o:Omit<PoliceUser,'uid'|'createdAt'> & {password:string}):Promise<PoliceUser>{if(!auth?.currentUser)throw new Error('You must be signed in as Super Admin.');const token=await auth.currentUser.getIdToken(true);const res=await fetch('/api/admin/police-users',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify(o)});const data=await res.json().catch(()=>({}));if(!res.ok)throw new Error(data.error||'Failed to create police account');return data.policeUser as PoliceUser}
  async togglePoliceAccountStatus(uid:string):Promise<PoliceUser|null>{const db=this.ready();const ref=doc(db,'policeUsers',uid);const s=await getDoc(ref);if(!s.exists())return null;const p=s.data()as PoliceUser;const n=!p.isActive;await updateDoc(ref,{isActive:n});return{...p,isActive:n}}
+ async getHomeBanners():Promise<HomeBanner[]>{const s=await getDocs(query(collection(this.ready(),'homepageBanners'),where('isActive','==',true),limit(5)));return s.docs.map(d=>d.data()as HomeBanner).sort((a,b)=>a.order-b.order)}
+ async getAllHomeBanners():Promise<HomeBanner[]>{const s=await getDocs(query(collection(this.ready(),'homepageBanners'),limit(5)));return s.docs.map(d=>d.data()as HomeBanner).sort((a,b)=>a.order-b.order)}
+ async saveHomeBanner(banner:HomeBanner):Promise<HomeBanner>{const db=this.ready();await setDoc(doc(db,'homepageBanners',banner.id),banner);return banner}
+ async deleteHomeBanner(id:string):Promise<void>{await setDoc(doc(this.ready(),'homepageBanners',id),{deleted:true},{merge:true});await updateDoc(doc(this.ready(),'homepageBanners',id),{isActive:false})}
  async getPublicStatistics():Promise<PublicStatistics>{const s=await getDoc(doc(this.ready(),'publicStatistics','summary'));if(s.exists())return s.data()as PublicStatistics;return{totalReports:0,underReview:0,verifiedIncidents:0,actionTaken:0,areasCovered:0,categoryDistribution:[],monthlyTrends:[]}}
 }
 export const dataService=new DataService();export default dataService;
