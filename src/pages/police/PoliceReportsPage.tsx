@@ -28,14 +28,17 @@ export const PoliceReportsPage: React.FC<PoliceReportsPageProps> = ({ onNavigate
   const [categoryFilter, setCategoryFilter] = useState<string>('ALL');
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  const thanaId = policeUser?.assignedThanaId || 'thana_gulshan';
+  const thanaId = policeUser?.assignedThanaId;
 
   useEffect(() => {
     const load = async () => {
       setIsLoading(true);
       try {
-        const uid = currentUser?.uid || 'police_gulshan_01';
-        const list = await dataService.getReports('POLICE_USER', uid, thanaId);
+        if (!currentUser || !policeUser?.assignedThanaId) {
+          setReports([]);
+          return;
+        }
+        const list = await dataService.getReports('POLICE_USER', currentUser.uid, policeUser.assignedThanaId);
         setReports(list);
       } catch (err) {
         console.error('Failed to load reports', err);
@@ -44,7 +47,7 @@ export const PoliceReportsPage: React.FC<PoliceReportsPageProps> = ({ onNavigate
       }
     };
     load();
-  }, [thanaId, currentUser]);
+  }, [thanaId, currentUser, policeUser]);
 
   const filteredReports = reports.filter((r) => {
     if (statusFilter !== 'ALL' && r.status !== statusFilter) return false;
