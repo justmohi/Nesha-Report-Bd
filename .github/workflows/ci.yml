@@ -29,3 +29,6 @@ jobs:
 
       - name: Production build
         run: npm run build
+
+      - name: Verify Bangladesh geography coverage
+        run: node -e "const fs=require('fs'); const m=JSON.parse(fs.readFileSync('public/data/bd-geo/manifest.json','utf8')); if(m.counts.divisions!==8 || m.counts.districts!==64 || m.counts.upazilas<490 || m.counts.unions<4700 || m.counts.villages<90000) throw new Error('Unexpected Bangladesh geography coverage: '+JSON.stringify(m.counts)); console.log(m.counts);"
