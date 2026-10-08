@@ -33,6 +33,7 @@ import AdminReportsPage from './pages/admin/AdminReportsPage';
 import AdminPolicePage from './pages/admin/AdminPolicePage';
 import AdminAuditLogsPage from './pages/admin/AdminAuditLogsPage';
 import AdminSettingsPage from './pages/admin/AdminSettingsPage';
+import AdminBannersPage from './pages/admin/AdminBannersPage';
 
 function AppContent() {
   const [currentTab, setCurrentTab] = useState<string>('home');
@@ -179,6 +180,16 @@ function AppContent() {
             onNavigateLogin={() => navigate('login')}
           >
             <AdminAuditLogsPage />
+          </RoleGuard>
+        );
+      case 'admin-banners':
+        return (
+          <RoleGuard
+            allowedRoles={['SUPER_ADMIN']}
+            onBack={() => navigate('admin-dashboard')}
+            onNavigateLogin={() => navigate('login')}
+          >
+            <AdminBannersPage />
           </RoleGuard>
         );
       case 'admin-settings':
