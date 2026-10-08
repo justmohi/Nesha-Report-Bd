@@ -65,16 +65,16 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate }) => {
 
   return (
     <div className="max-w-md mx-auto px-4 py-12">
-      <div className="p-6 sm:p-8 rounded-3xl bg-slate-900 border border-slate-800 shadow-2xl space-y-6">
+      <div className="p-6 sm:p-8 rounded-3xl bg-white border border-slate-200 shadow-2xl space-y-6">
         {/* Header */}
         <div className="text-center space-y-2">
-          <div className="w-12 h-12 rounded-2xl bg-emerald-600/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 mx-auto">
+          <div className="w-12 h-12 rounded-2xl bg-emerald-600/10 border border-emerald-200 flex items-center justify-center text-[#006a4e] mx-auto">
             <Lock className="w-6 h-6" />
           </div>
-          <h1 className="text-2xl font-extrabold text-white">
+          <h1 className="text-2xl font-extrabold text-slate-900">
             {language === 'bn' ? 'সিস্টেমে প্রবেশ করুন' : 'System Login'}
           </h1>
-          <p className="text-xs text-slate-400">
+          <p className="text-xs text-slate-500">
             {language === 'bn'
               ? 'আপনার ভূমিকা অনুযায়ী সঠিক অ্যাকাউন্টে লগইন করুন'
               : 'Select your role to access authorized portal'}
@@ -82,14 +82,14 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate }) => {
         </div>
 
         {/* Role Tabs */}
-        <div className="grid grid-cols-3 gap-1 p-1 bg-slate-950 rounded-xl border border-slate-800 text-xs font-semibold">
+        <div className="grid grid-cols-3 gap-1 p-1 bg-slate-50 rounded-xl border border-slate-200 text-xs font-semibold">
           <button
             type="button"
             onClick={() => handleTabChange('POLICE')}
             className={`py-2 rounded-lg transition ${
               activeTab === 'POLICE'
-                ? 'bg-blue-600 text-white shadow'
-                : 'text-slate-400 hover:text-white'
+                ? 'bg-blue-600 text-slate-900 shadow'
+                : 'text-slate-500 hover:text-slate-900'
             }`}
           >
             {language === 'bn' ? 'পুলিশ থানা' : 'Police Thana'}
@@ -99,8 +99,8 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate }) => {
             onClick={() => handleTabChange('ADMIN')}
             className={`py-2 rounded-lg transition ${
               activeTab === 'ADMIN'
-                ? 'bg-purple-600 text-white shadow'
-                : 'text-slate-400 hover:text-white'
+                ? 'bg-purple-600 text-slate-900 shadow'
+                : 'text-slate-500 hover:text-slate-900'
             }`}
           >
             {language === 'bn' ? 'অ্যাডমিন' : 'Admin'}
@@ -110,8 +110,8 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate }) => {
             onClick={() => handleTabChange('PUBLIC')}
             className={`py-2 rounded-lg transition ${
               activeTab === 'PUBLIC'
-                ? 'bg-emerald-600 text-white shadow'
-                : 'text-slate-400 hover:text-white'
+                ? 'bg-emerald-600 text-slate-900 shadow'
+                : 'text-slate-500 hover:text-slate-900'
             }`}
           >
             {language === 'bn' ? 'নাগরিক' : 'Citizen'}
@@ -119,8 +119,8 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate }) => {
         </div>
 
         {error && (
-          <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs flex items-center gap-2">
-            <AlertCircle className="w-4 h-4 flex-shrink-0 text-rose-400" />
+          <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-red-600 text-xs flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 flex-shrink-0 text-red-600" />
             <span>{error}</span>
           </div>
         )}
@@ -128,27 +128,27 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate }) => {
         {/* Form */}
         <form onSubmit={handleLogin} className="space-y-4">
           <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+            <label className="block text-xs font-semibold text-slate-600 mb-1.5">
               {t('email')}
             </label>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-4 py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              className="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-300 text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
               required
             />
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+            <label className="block text-xs font-semibold text-slate-600 mb-1.5">
               {language === 'bn' ? 'পাসওয়ার্ড' : 'Password'}
             </label>
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 font-mono"
+              className="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-300 text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 font-mono"
               required
             />
           </div>
@@ -156,7 +156,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate }) => {
           <button
             type="submit"
             disabled={isLoading}
-            className={`w-full py-3 rounded-xl font-bold text-sm text-white shadow-lg transition flex items-center justify-center gap-2 cursor-pointer ${
+            className={`w-full py-3 rounded-xl font-bold text-sm text-slate-900 shadow-lg transition flex items-center justify-center gap-2 cursor-pointer ${
               activeTab === 'POLICE'
                 ? 'bg-blue-600 hover:bg-blue-500 shadow-blue-600/20'
                 : activeTab === 'ADMIN'
@@ -179,7 +179,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate }) => {
           <div className="text-center pt-2">
             <button
               onClick={() => onNavigate('register')}
-              className="text-xs text-emerald-400 hover:text-emerald-300 font-semibold"
+              className="text-xs text-[#006a4e] hover:text-[#006a4e] font-semibold"
             >
               {language === 'bn'
                 ? 'নতুন নাগরিক অ্যাকাউন্ট তৈরি করুন (নিবন্ধন)'
