@@ -183,6 +183,13 @@ export interface UnionItem {
   nameBn: string;
 }
 
+export interface VillageItem {
+  id: string;
+  unionId: string;
+  nameEn: string;
+  nameBn: string;
+}
+
 export interface PublicStatistics {
   totalReports: number;
   underReview: number;
