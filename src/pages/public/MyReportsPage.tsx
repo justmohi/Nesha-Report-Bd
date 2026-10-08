@@ -30,8 +30,11 @@ export const MyReportsPage: React.FC<MyReportsPageProps> = ({ onNavigate }) => {
     const loadData = async () => {
       setIsLoading(true);
       try {
-        const uid = currentUser?.uid || 'citizen_demo_01';
-        const list = await dataService.getReports('PUBLIC_USER', uid);
+        if (!currentUser) {
+          setReports([]);
+          return;
+        }
+        const list = await dataService.getReports('PUBLIC_USER', currentUser.uid);
         setReports(list);
       } catch (err) {
         console.error('Failed to load reports', err);
