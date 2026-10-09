@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { execFileSync } from 'node:child_process';
+import { decompress } from 'fzstd';
+import * as tar from 'tar';
 import { pipeline } from 'node:stream/promises';
 import { createHash } from 'node:crypto';
 import { createWriteStream, existsSync, mkdirSync, readFileSync } from 'node:fs';
@@ -23,7 +24,15 @@ async function main(){
  if(!existsSync(archive)){console.log(`Downloading Bangladesh geography ${VERSION}...`);await download(DOWNLOAD_URL,archive)}
  if(sha256(archive)!==EXPECTED_SHA256)throw new Error('Downloaded Bangladesh geography archive failed SHA-256 verification.');
  if(!existsSync(extractDir))mkdirSync(extractDir,{recursive:true});
- if(!findFile(extractDir,'villages.json'))execFileSync('tar',['--zstd','-xf',archive,'-C',extractDir],{stdio:'inherit'});
+ if(!findFile(extractDir,'villages.json')) {
+  console.log('Extracting geography archive with the cross-platform JavaScript decoder...');
+  const tarArchive=path.join(cacheDir,'dataset.tar');
+  const compressed=readFileSync(archive);
+  const decompressed=decompress(compressed);
+  fs.writeFileSync(tarArchive,Buffer.from(decompressed));
+  await tar.x({file:tarArchive,cwd:extractDir});
+  fs.unlinkSync(tarArchive);
+ }
  const files={divisions:findFile(extractDir,'divisions.json'),districts:findFile(extractDir,'zillas.json'),upazilas:findFile(extractDir,'upazilas.json'),unions:findFile(extractDir,'unions.json'),villages:findFile(extractDir,'villages.json')};
  if(Object.values(files).some(v=>!v))throw new Error('Expected geography entity files were not found in the verified release.');
  const current=readFileSync(path.join(root,'src','data','bdGeoData.ts'),'utf8');
