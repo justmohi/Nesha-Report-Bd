@@ -26,7 +26,9 @@
     "react": "^19.0.1",
     "react-dom": "^19.0.1",
     "vite": "^8.3.0",
-    "typescript": "^7.0.2"
+    "typescript": "^7.0.2",
+    "fzstd": "^0.1.1",
+    "tar": "^7.5.7"
   },
   "devDependencies": {
     "@types/express": "^5.0.5",
