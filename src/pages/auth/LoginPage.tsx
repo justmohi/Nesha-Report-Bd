@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useLanguage } from '../../context/LanguageContext';
 import { useAuth } from '../../context/AuthContext';
 import { Shield, Lock, Building2, User, KeyRound, AlertCircle, ArrowRight, Chrome } from 'lucide-react';
@@ -9,7 +9,7 @@ interface LoginPageProps {
 
 export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate }) => {
   const { t, language } = useLanguage();
-  const { loginAsPublic, loginAsPolice, loginAsAdmin, loginWithGoogleAsPublic } = useAuth();
+  const { currentUser, loginAsPublic, loginAsPolice, loginAsAdmin, loginWithGoogleAsPublic } = useAuth();
 
   const [activeTab, setActiveTab] = useState<'PUBLIC' | 'POLICE' | 'ADMIN'>('POLICE');
   const [email, setEmail] = useState<string>('');
@@ -17,6 +17,10 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate }) => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (activeTab === 'PUBLIC' && currentUser?.role === 'PUBLIC_USER') onNavigate('my-reports');
+  }, [activeTab, currentUser, onNavigate]);
 
   const handleTabChange = (tab: 'PUBLIC' | 'POLICE' | 'ADMIN') => {
     setActiveTab(tab);
@@ -184,11 +188,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate }) => {
               setError(null);
               setIsGoogleLoading(true);
               try {
-                await Promise.race([
-                  loginWithGoogleAsPublic(),
-                  new Promise<never>((_, reject) => window.setTimeout(() => reject(new Error(language === 'bn' ? 'Google login ৩০ সেকেন্ডেও সম্পন্ন হয়নি। Firebase Console-এ Google provider ও Authorized domains (localhost) যাচাই করুন, তারপর আবার চেষ্টা করুন।' : 'Google sign-in did not finish within 30 seconds. Check that the Google provider is enabled and localhost is an authorized domain in Firebase, then try again.')), 30000)),
-                ]);
-                onNavigate('my-reports');
+                await loginWithGoogleAsPublic();
               } catch (err: any) {
                 setError(err?.message || (language === 'bn' ? 'Google দিয়ে লগইন করা যায়নি।' : 'Google sign-in failed.'));
               } finally {
