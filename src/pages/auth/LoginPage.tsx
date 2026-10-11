@@ -15,6 +15,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate }) => {
   const [email, setEmail] = useState<string>('');
   const [password, setPassword] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
   const handleTabChange = (tab: 'PUBLIC' | 'POLICE' | 'ADMIN') => {
@@ -178,23 +179,26 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate }) => {
         {activeTab === 'PUBLIC' && (
           <button
             type="button"
-            disabled={isLoading}
+            disabled={isLoading || isGoogleLoading}
             onClick={async () => {
               setError(null);
-              setIsLoading(true);
+              setIsGoogleLoading(true);
               try {
-                await loginWithGoogleAsPublic();
+                await Promise.race([
+                  loginWithGoogleAsPublic(),
+                  new Promise<never>((_, reject) => window.setTimeout(() => reject(new Error(language === 'bn' ? 'Google login ৩০ সেকেন্ডেও সম্পন্ন হয়নি। Firebase Console-এ Google provider ও Authorized domains (localhost) যাচাই করুন, তারপর আবার চেষ্টা করুন।' : 'Google sign-in did not finish within 30 seconds. Check that the Google provider is enabled and localhost is an authorized domain in Firebase, then try again.')), 30000)),
+                ]);
                 onNavigate('my-reports');
               } catch (err: any) {
                 setError(err?.message || (language === 'bn' ? 'Google দিয়ে লগইন করা যায়নি।' : 'Google sign-in failed.'));
               } finally {
-                setIsLoading(false);
+                setIsGoogleLoading(false);
               }
             }}
             className="w-full py-3 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-slate-800 font-semibold text-sm flex items-center justify-center gap-3 disabled:opacity-60"
           >
-            <Chrome className="w-5 h-5" />
-            {language === 'bn' ? 'Google দিয়ে চালিয়ে যান' : 'Continue with Google'}
+            {isGoogleLoading ? <div className="w-5 h-5 border-2 border-slate-500 border-t-transparent rounded-full animate-spin" /> : <Chrome className="w-5 h-5" />}
+            {isGoogleLoading ? (language === 'bn' ? 'Google-এ সংযোগ হচ্ছে…' : 'Connecting to Google…') : (language === 'bn' ? 'Google দিয়ে চালিয়ে যান' : 'Continue with Google')}
           </button>
         )}
 
