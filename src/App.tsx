@@ -36,7 +36,7 @@ import AdminSettingsPage from './pages/admin/AdminSettingsPage';
 import AdminBannersPage from './pages/admin/AdminBannersPage';
 
 function AppContent() {
-  const { currentUser, isLoading } = useAuth();
+  const { currentUser, isLoading, authError, clearAuthError } = useAuth();
   const [currentTab, setCurrentTab] = useState<string>('home');
 
   // A Google redirect returns to the app's root URL, so route authenticated
@@ -220,6 +220,7 @@ function AppContent() {
   return (
     <div className="min-h-screen flex flex-col bg-slate-50 text-slate-900 font-sans selection:bg-emerald-600 selection:text-white">
       <Navbar currentTab={currentTab} onNavigate={navigate} />
+      {authError && !currentUser && <div role="alert" className="mx-auto mt-4 w-full max-w-3xl rounded-xl border border-rose-300 bg-rose-50 px-4 py-3 text-sm text-rose-800"><div className="flex items-start justify-between gap-3"><span><strong>Login/profile error:</strong> {authError}</span><button type="button" onClick={clearAuthError} className="font-bold" aria-label="Dismiss error">×</button></div></div>}
       <main className="flex-1">
         {renderContent()}
       </main>
