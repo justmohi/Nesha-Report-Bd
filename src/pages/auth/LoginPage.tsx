@@ -189,6 +189,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate }) => {
               setIsGoogleLoading(true);
               try {
                 await loginWithGoogleAsPublic();
+                onNavigate('my-reports');
               } catch (err: any) {
                 setError(err?.message || (language === 'bn' ? 'Google দিয়ে লগইন করা যায়নি।' : 'Google sign-in failed.'));
               } finally {
