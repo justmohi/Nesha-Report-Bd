@@ -318,7 +318,8 @@ service cloud.firestore {
     }
 
     match /homepageBanners/{bannerId} {
-      allow read: if resource.data.isActive == true;
+      // Public visitors may read active banners; admins can read all banners, including drafts/inactive slides.
+      allow read: if isAdmin() || resource.data.isActive == true;
       allow write: if isAdmin();
     }
 
