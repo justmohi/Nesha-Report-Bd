@@ -2,6 +2,18 @@
 
 @layer base {
   body {
-    font-family: 'Hind Siliguri', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-family: 'Anek Bangla', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+}
+
+@layer base {
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Tiro Bangla', 'Noto Serif Bengali', serif;
+  }
+}
+
+@layer utilities {
+  .font-bengali-serif {
+    font-family: 'Noto Serif Bengali', 'Tiro Bangla', serif;
   }
 }
