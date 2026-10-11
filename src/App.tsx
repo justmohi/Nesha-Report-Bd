@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { LanguageProvider } from './context/LanguageContext';
-import { AuthProvider } from './context/AuthContext';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import { NotificationProvider } from './context/NotificationContext';
 import Navbar from './components/layout/Navbar';
 import Footer from './components/layout/Footer';
@@ -36,7 +36,16 @@ import AdminSettingsPage from './pages/admin/AdminSettingsPage';
 import AdminBannersPage from './pages/admin/AdminBannersPage';
 
 function AppContent() {
+  const { currentUser, isLoading } = useAuth();
   const [currentTab, setCurrentTab] = useState<string>('home');
+
+  // A Google redirect returns to the app's root URL, so route authenticated
+  // citizens to their dashboard instead of leaving them on the home page.
+  useEffect(() => {
+    if (!isLoading && currentUser?.role === 'PUBLIC_USER' && (currentTab === 'home' || currentTab === 'login' || currentTab === 'register')) {
+      setCurrentTab('my-reports');
+    }
+  }, [currentUser, isLoading, currentTab]);
   const [selectedReportId, setSelectedReportId] = useState<string>('');
 
   const navigate = (tab: string, param?: string) => {
