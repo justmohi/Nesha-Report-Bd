@@ -17,3 +17,12 @@
     font-family: 'Noto Serif Bengali', 'Tiro Bangla', serif;
   }
 }
+
+/* Anek Bangla variable-font utility. Override --anek-bangla-weight per element when needed. */
+.anek-bangla {
+  font-family: "Anek Bangla", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: var(--anek-bangla-weight, 400);
+  font-style: normal;
+  font-variation-settings: "wdth" 100;
+}
