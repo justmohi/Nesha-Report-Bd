@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useLanguage } from '../../context/LanguageContext';
 import { useAuth } from '../../context/AuthContext';
-import { Shield, Lock, Building2, User, KeyRound, AlertCircle, ArrowRight } from 'lucide-react';
+import { Shield, Lock, Building2, User, KeyRound, AlertCircle, ArrowRight, Chrome } from 'lucide-react';
 
 interface LoginPageProps {
   onNavigate: (tab: string) => void;
@@ -9,7 +9,7 @@ interface LoginPageProps {
 
 export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate }) => {
   const { t, language } = useLanguage();
-  const { loginAsPublic, loginAsPolice, loginAsAdmin } = useAuth();
+  const { loginAsPublic, loginAsPolice, loginAsAdmin, loginWithGoogleAsPublic } = useAuth();
 
   const [activeTab, setActiveTab] = useState<'PUBLIC' | 'POLICE' | 'ADMIN'>('POLICE');
   const [email, setEmail] = useState<string>('');
@@ -174,6 +174,29 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate }) => {
             )}
           </button>
         </form>
+
+        {activeTab === 'PUBLIC' && (
+          <button
+            type="button"
+            disabled={isLoading}
+            onClick={async () => {
+              setError(null);
+              setIsLoading(true);
+              try {
+                await loginWithGoogleAsPublic();
+                onNavigate('my-reports');
+              } catch (err: any) {
+                setError(err?.message || (language === 'bn' ? 'Google দিয়ে লগইন করা যায়নি।' : 'Google sign-in failed.'));
+              } finally {
+                setIsLoading(false);
+              }
+            }}
+            className="w-full py-3 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-slate-800 font-semibold text-sm flex items-center justify-center gap-3 disabled:opacity-60"
+          >
+            <Chrome className="w-5 h-5" />
+            {language === 'bn' ? 'Google দিয়ে চালিয়ে যান' : 'Continue with Google'}
+          </button>
+        )}
 
         {activeTab === 'PUBLIC' && (
           <div className="text-center pt-2">
