@@ -18,21 +18,26 @@ class DataService{
      fetch('/data/bd-geo/admin.json').then(r=>r.json()),
    ]);
    const stations=[...getPoliceStations(),...registryStations];
-   const district=admin.districts.find((x:any)=>x.id===d);
-   if(!district)return [];
-   const legacyIds=new Set([district.id,district.legacyId].filter(Boolean));
-   const districtNames=new Set([district.nameEn,district.nameBn].filter(Boolean).map(normalizeName));
+   const district=d ? admin.districts.find((x:any)=>x.id===d) : undefined;
+   if(d && !district)return [];
+   const legacyIds=new Set([district?.id,district?.legacyId].filter(Boolean));
+   const districtNames=new Set([district?.nameEn,district?.nameBn].filter(Boolean).map(normalizeName));
    const matched=stations.filter((station:any)=>{
+     if(!district)return true;
      if(station.source==='BANGLADESH_POLICE') return districtNames.has(normalizeName(station.sourceDistrictNameEn||''));
      return legacyIds.has(station.districtId) || (station.source==='ADDRESS_REGISTRY' && station.districtId===district.id);
    });
    const seen=new Set<string>();
    return matched.filter((station:any)=>{
-     const key=`${normalizeName(station.nameEn)}|${normalizeName(station.sourceDistrictNameEn||district.nameEn)}|${station.districtId||''}`;
+     const sourceDistrict=station.sourceDistrictNameEn || admin.districts.find((x:any)=>x.id===station.districtId || x.legacyId===station.districtId)?.nameEn || '';
+     const key=`${normalizeName(station.nameEn)}|${normalizeName(sourceDistrict)}|${station.districtId||''}`;
      if(seen.has(key))return false;
      seen.add(key);
      return true;
-   }).map((station:any)=>({...station,districtId:district.id,upazilaId:undefined}));
+   }).map((station:any)=>{
+     const resolvedDistrict=district || admin.districts.find((x:any)=>normalizeName(x.nameEn)===normalizeName(station.sourceDistrictNameEn||'') || x.id===station.districtId || x.legacyId===station.districtId);
+     return {...station,districtId:district?.id || resolvedDistrict?.id || station.districtId || '',upazilaId:undefined};
+   });
  }
  async getUnions(u?:string):Promise<UnionItem[]>{const rows=await this.geo<any>('unions.json');return rows.filter(a=>!u||a.upazilaId===u).map(a=>({id:a.id,upazilaId:a.upazilaId,nameEn:a.nameEn,nameBn:a.nameBn}))}
  async getVillages(u?:string):Promise<VillageItem[]>{const rows=await this.geo<any>('villages.json');return rows.filter(v=>!u||v.unionId===u).map(v=>({id:v.id,unionId:v.unionId,nameEn:v.nameEn,nameBn:v.nameBn}))}
