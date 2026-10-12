@@ -57,7 +57,7 @@ export const Navbar: React.FC<NavbarProps> = ({ currentTab, onNavigate }) => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 sm:py-4">
           <div className="flex items-center justify-between gap-4">
             <button onClick={() => handleNav('home')} className="flex items-center gap-3 text-left min-w-0">
-              <img src="/logo.svg" alt="Nesha Report BD logo" className="w-12 h-12 object-contain flex-shrink-0" />
+              <img src="/logo.png" alt="Nesha Report BD logo" className="w-12 h-12 object-contain flex-shrink-0" />
               <div className="min-w-0">
                 <div className="text-base sm:text-xl font-bold text-slate-900 truncate">{t('brandName')}</div>
                 <div className="text-[10px] sm:text-xs text-slate-500 truncate">
