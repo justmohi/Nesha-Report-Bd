@@ -1,7 +1,7 @@
 import{Report,ReportedPerson,Evidence,AuditLog,NotificationItem,PoliceUser,District,Upazila,Thana,UnionItem,VillageItem,PublicStatistics,ReportStatus,UserRole,HomeBanner}from'../types';
 import{db,isFirebaseConfigured,auth}from'../lib/firebase';
 import{collection,doc,getDoc,getDocs,setDoc,updateDoc,deleteDoc,writeBatch,query,where,orderBy,limit}from'firebase/firestore';
-import{getUpazilas as geoUpazilas}from'../data/bdGeoData';
+import{getUpazilas as geoUpazilas,districts as geoDistricts}from'../data/bdGeoData';
 import{getPoliceStations}from'../data/policeStations';
 
 const normalizeName=(value:string)=>value.toLowerCase().replace(/[\s._-]+/g,'').replace(/chittagong/g,'chattogram').replace(/barisal/g,'barishal');
@@ -25,11 +25,19 @@ class DataService{
    const matched=stations.filter((station:any)=>{
      if(!district)return true;
      if(station.source==='BANGLADESH_POLICE') return districtNames.has(normalizeName(station.sourceDistrictNameEn||''));
+     if(station.source==='LEGACY_GEO') {
+       const legacyId=String(station.districtId||'').replace(/^dist_/,'');
+       const legacyDistrict=(geoDistricts as readonly any[]).find((item:any)=>String(item.id)===legacyId);
+       const legacyDistrictName=legacyDistrict?.nameEn || legacyDistrict?.name || legacyDistrict?.nameBn || '';
+       return legacyIds.has(station.districtId) || districtNames.has(normalizeName(legacyDistrictName));
+     }
      return legacyIds.has(station.districtId) || (station.source==='ADDRESS_REGISTRY' && station.districtId===district.id);
    });
    const seen=new Set<string>();
    return matched.filter((station:any)=>{
-     const sourceDistrict=station.sourceDistrictNameEn || admin.districts.find((x:any)=>x.id===station.districtId || x.legacyId===station.districtId)?.nameEn || '';
+     const legacyId=String(station.districtId||'').replace(/^dist_/,'');
+     const legacyDistrict=(geoDistricts as readonly any[]).find((item:any)=>String(item.id)===legacyId);
+     const sourceDistrict=station.sourceDistrictNameEn || admin.districts.find((x:any)=>x.id===station.districtId || x.legacyId===station.districtId)?.nameEn || legacyDistrict?.nameEn || legacyDistrict?.name || legacyDistrict?.nameBn || '';
      const key=`${normalizeName(station.nameEn)}|${normalizeName(sourceDistrict)}|${station.districtId||''}`;
      if(seen.has(key))return false;
      seen.add(key);
