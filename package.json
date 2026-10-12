@@ -6,11 +6,13 @@
   "scripts": {
     "dev": "npm run prepare:geo && tsx server.ts",
     "build": "npm run prepare:geo && vite build",
-    "start": "tsx server.ts",
+    "start": "node_modules/.bin/tsx server.ts",
     "preview": "vite preview",
     "clean": "rm -rf dist server.js",
     "lint": "tsc --noEmit",
-    "prepare:geo": "node scripts/prepare-bd-geo.mjs"
+    "prepare:geo": "node scripts/prepare-bd-geo.mjs",
+    "start:prod": "NODE_ENV=production node_modules/.bin/tsx server.ts",
+    "deploy:hosting": "npm run build && firebase deploy --only hosting"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",
@@ -28,7 +30,8 @@
     "vite": "^8.3.0",
     "typescript": "^7.0.2",
     "fzstd": "^0.1.1",
-    "tar": "^7.5.7"
+    "tar": "^7.5.7",
+    "tsx": "^4.20.6"
   },
   "devDependencies": {
     "@types/express": "^5.0.5",
