@@ -4,14 +4,24 @@ import{collection,doc,getDoc,getDocs,setDoc,updateDoc,deleteDoc,writeBatch,query
 import{getUpazilas as geoUpazilas,districts as geoDistricts}from'../data/bdGeoData';
 import{getPoliceStations}from'../data/policeStations';
 
-const normalizeName=(value:string)=>value.toLowerCase().replace(/[\s._-]+/g,'').replace(/chittagong/g,'chattogram').replace(/barisal/g,'barishal');
+const normalizeName=(value:string)=>value.toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9\u0980-\u09ff]+/g,'').replace(/chittagong|chittagonj/g,'chattogram').replace(/comilla/g,'cumilla').replace(/jessore|jeshore/g,'jashore').replace(/barisal/g,'barishal').replace(/bogra/g,'bogura');
 
 class DataService{
  private ready(){if(!isFirebaseConfigured||!db)throw new Error('Firebase is not configured.');return db}
  private geoCache:Record<string,any[]>={};
  private async geo<T=any>(file:string):Promise<T[]>{if(this.geoCache[file])return this.geoCache[file] as T[];const res=await fetch(`/data/bd-geo/${file}`);if(!res.ok)throw new Error(`Failed to load geography dataset: ${file}`);const data=await res.json();this.geoCache[file]=Array.isArray(data)?data:(data.records||[]);return this.geoCache[file] as T[]}
- async getDistricts():Promise<District[]>{const admin=await fetch('/data/bd-geo/admin.json').then(r=>r.json());return admin.districts.map((d:any)=>({id:d.id,nameEn:d.nameEn,nameBn:d.nameBn,division:d.divisionId||''}))}
- async getUpazilas(d?:string):Promise<Upazila[]>{const admin=await fetch('/data/bd-geo/admin.json').then(r=>r.json());return admin.upazilas.filter((u:any)=>!d||u.districtId===d).map((u:any)=>({id:u.id,districtId:u.districtId,nameEn:u.nameEn,nameBn:u.nameBn}))}
+ async getDistricts():Promise<District[]>{
+   const res=await fetch('/data/bd-geo/admin.json');
+   if(!res.ok)throw new Error('জেলা তালিকা লোড করা যায়নি। Geography dataset তৈরি হয়েছে কি না যাচাই করুন।');
+   const admin=await res.json();
+   const rows=Array.isArray(admin.districts)?admin.districts:[];
+   if(rows.length<64)throw new Error(`অসম্পূর্ণ জেলা ডেটা: ${rows.length}/64টি জেলা পাওয়া গেছে।`);
+   return rows.map((d:any)=>({id:String(d.id),nameEn:d.nameEn||d.nameBn||'',nameBn:d.nameBn||d.nameEn||'',division:String(d.divisionId||'')}));
+ }
+ async getUpazilas(d?:string):Promise<Upazila[]>{
+   const admin=await fetch('/data/bd-geo/admin.json').then(r=>r.json());
+   return (admin.upazilas||[]).filter((u:any)=>!d||String(u.districtId)===String(d)).map((u:any)=>({id:String(u.id),districtId:String(u.districtId),nameEn:u.nameEn||u.nameBn||'',nameBn:u.nameBn||u.nameEn||''}));
+ }
  async getThanas(_u?:string,d?:string):Promise<Thana[]>{
    const [registryStations, admin]=await Promise.all([
      this.geo<any>('police-stations.json').catch(() => []),
@@ -24,14 +34,16 @@ class DataService{
    const districtNames=new Set([district?.nameEn,district?.nameBn].filter(Boolean).map(normalizeName));
    const matched=stations.filter((station:any)=>{
      if(!district)return true;
-     if(station.source==='BANGLADESH_POLICE') return districtNames.has(normalizeName(station.sourceDistrictNameEn||''));
-     if(station.source==='LEGACY_GEO') {
-       const legacyId=String(station.districtId||'').replace(/^dist_/,'');
-       const legacyDistrict=(geoDistricts as readonly any[]).find((item:any)=>String(item.id)===legacyId);
-       const legacyDistrictName=legacyDistrict?.nameEn || legacyDistrict?.name || legacyDistrict?.nameBn || '';
-       return legacyIds.has(station.districtId) || districtNames.has(normalizeName(legacyDistrictName));
-     }
-     return legacyIds.has(String(station.districtId)) || (station.source==='ADDRESS_REGISTRY' && String(station.districtId)===String(district.id));
+     const stationDistrictId=String(station.districtId||'');
+     const stationDistrictName=String(station.sourceDistrictNameEn||station.districtNameEn||station.districtName||'');
+     const districtById=admin.districts.find((x:any)=>String(x.id)===stationDistrictId||String(x.legacyId||'')===stationDistrictId);
+     const legacyId=stationDistrictId.replace(/^dist_/,'');
+     const legacyDistrict=(geoDistricts as readonly any[]).find((item:any)=>String(item.id)===legacyId);
+     const legacyDistrictName=legacyDistrict?.nameEn||legacyDistrict?.name||legacyDistrict?.nameBn||'';
+     if(station.source==='BANGLADESH_POLICE')return districtNames.has(normalizeName(stationDistrictName));
+     if(station.source==='LEGACY_GEO')return legacyIds.has(stationDistrictId)||districtNames.has(normalizeName(legacyDistrictName));
+     // Prefer stable IDs, but also match names when source datasets use different ID schemes.
+     return legacyIds.has(stationDistrictId)||String(districtById?.id||'')===String(district.id)||districtNames.has(normalizeName(stationDistrictName));
    });
    const seen=new Set<string>();
    return matched.filter((station:any)=>{
