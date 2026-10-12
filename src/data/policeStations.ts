@@ -28,6 +28,8 @@ export const officialPoliceStations: OfficialStation[] = [
   ...official('Rajshahi', 'RMP', ['Boalia model','Rajpara','Motihar','Shahmokhdum']),
   ...official('Sylhet', 'SMP', ['Kotoali','South Surma','Jalalabad','Airport','Moglabazar','Harzat Shah Paran']),
   ...official('Barishal', 'BMP', ['Kotowali model','Airport PS','Kawnia','Bondor PS']),
+  // Kushtia District Police stations, cross-checked against Bangladesh Police Khulna Range and Kushtia Judiciary.
+  ...official('Kushtia', 'KUSHTIA_DISTRICT', ['Kushtia Model','Kumarkhali','Khoksa','Mirpur','Bheramara','Daulatpur','Islamic University']),
 ];
 
 const legacyPoliceStations: Thana[] = (upazilas as readonly any[])
