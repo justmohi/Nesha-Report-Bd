@@ -29,20 +29,45 @@ export const AdminPolicePage: React.FC = () => {
   const [rank, setRank] = useState<string>('Sub-Inspector (SI)');
   const [assignedDistrictId, setAssignedDistrictId] = useState<string>('');
   const [assignedThanaId, setAssignedThanaId] = useState<string>('');
+  const [loadingThanas, setLoadingThanas] = useState<boolean>(false);
+  const [thanaLoadError, setThanaLoadError] = useState<string>('');
+  const [submitting, setSubmitting] = useState<boolean>(false);
+  const [formError, setFormError] = useState<string>('');
   const [email, setEmail] = useState<string>('');
   const [password, setPassword] = useState<string>('');
 
   useEffect(() => {
     dataService.getPoliceUsers().then(setOfficers);
-    dataService.getDistricts().then(setDistricts);
-    dataService.getThanas().then((list) => {
-      setThanas(list);
-      if (list.length > 0) {
-        setAssignedThanaId((current) => list.some(t => t.id === current) ? current : list[0].id);
-        setAssignedDistrictId((current) => current || list[0].districtId);
-      }
+    dataService.getDistricts().then(setDistricts).catch((error) => {
+      console.error('Failed to load districts:', error);
+      setThanaLoadError(language === 'bn' ? 'জেলার তালিকা লোড করা যায়নি। পেজ রিফ্রেশ করুন।' : 'Could not load districts. Please refresh the page.');
     });
-  }, []);
+  }, [language]);
+
+  useEffect(() => {
+    if (!showCreateModal || !assignedDistrictId) {
+      setThanas([]);
+      setAssignedThanaId('');
+      setThanaLoadError('');
+      return;
+    }
+    let cancelled = false;
+    setLoadingThanas(true);
+    setThanaLoadError('');
+    setThanas([]);
+    setAssignedThanaId('');
+    dataService.getThanas(undefined, assignedDistrictId).then((list) => {
+      if (cancelled) return;
+      setThanas(list);
+      if (list.length === 0) {
+        setThanaLoadError(language === 'bn' ? 'এই জেলার জন্য কোনো থানা পাওয়া যায়নি।' : 'No police stations were found for this district.');
+      }
+    }).catch((error) => {
+      console.error('Failed to load police stations:', error);
+      if (!cancelled) setThanaLoadError(language === 'bn' ? 'থানার তালিকা লোড করা যায়নি। আবার চেষ্টা করুন।' : 'Could not load police stations. Please try again.');
+    }).finally(() => { if (!cancelled) setLoadingThanas(false); });
+    return () => { cancelled = true; };
+  }, [showCreateModal, assignedDistrictId, language]);
 
   const handleToggleStatus = async (uid: string) => {
     const updated = await dataService.togglePoliceAccountStatus(uid);
@@ -55,8 +80,14 @@ export const AdminPolicePage: React.FC = () => {
 
   const handleCreateOfficer = async (e: React.FormEvent) => {
     e.preventDefault();
+    setFormError('');
     const selThana = thanas.find((t) => t.id === assignedThanaId);
-
+    if (!assignedDistrictId || !selThana) {
+      setFormError(language === 'bn' ? 'আগে জেলা ও থানার নাম নির্বাচন করুন।' : 'Please select a district and police station first.');
+      return;
+    }
+    setSubmitting(true);
+    try {
     const newOfficer = await dataService.createPoliceUser({
       fullName,
       badgeNumber,
@@ -77,6 +108,14 @@ export const AdminPolicePage: React.FC = () => {
     setBadgeNumber('');
     setEmail('');
     setPassword('');
+    setAssignedDistrictId('');
+    setAssignedThanaId('');
+    } catch (error) {
+      console.error('Failed to create police account:', error);
+      setFormError(error instanceof Error ? error.message : (language === 'bn' ? 'অ্যাকাউন্ট তৈরি করা যায়নি। আবার চেষ্টা করুন।' : 'Could not create account. Please try again.'));
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -233,21 +272,41 @@ export const AdminPolicePage: React.FC = () => {
                 </div>
               </div>
 
-              <div>
-                <label className="block text-slate-300 font-semibold mb-1">
-                  {t('assignThana')} *
-                </label>
-                <select
-                  value={assignedThanaId}
-                  onChange={(e) => setAssignedThanaId(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-slate-100 text-xs focus:outline-none focus:ring-2 focus:ring-purple-500"
-                >
-                  {thanas.map((th) => (
-                    <option key={th.id} value={th.id}>
-                      {language === 'bn' ? th.nameBn : th.nameEn}
-                    </option>
-                  ))}
-                </select>
+              <div className="space-y-3 rounded-xl border border-slate-800 bg-slate-950/40 p-3">
+                <div>
+                  <label className="block text-slate-300 font-semibold mb-1">
+                    {language === 'bn' ? 'জেলা নির্বাচন *' : 'Select District *'}
+                  </label>
+                  <select
+                    value={assignedDistrictId}
+                    onChange={(e) => setAssignedDistrictId(e.target.value)}
+                    required
+                    className="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-slate-100 text-xs focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  >
+                    <option value="">{language === 'bn' ? 'প্রথমে জেলা নির্বাচন করুন' : 'Choose a district first'}</option>
+                    {districts.slice().sort((a, b) => (language === 'bn' ? a.nameBn.localeCompare(b.nameBn, 'bn') : a.nameEn.localeCompare(b.nameEn))).map((district) => (
+                      <option key={district.id} value={district.id}>{language === 'bn' ? district.nameBn : district.nameEn}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-slate-300 font-semibold mb-1">
+                    {t('assignThana')} *
+                  </label>
+                  <select
+                    value={assignedThanaId}
+                    onChange={(e) => setAssignedThanaId(e.target.value)}
+                    required
+                    disabled={!assignedDistrictId || loadingThanas || thanas.length === 0}
+                    className="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-slate-100 text-xs focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <option value="">{loadingThanas ? (language === 'bn' ? 'থানার তালিকা লোড হচ্ছে…' : 'Loading police stations…') : (language === 'bn' ? 'জেলা নির্বাচন করে থানা বাছুন' : 'Select a district, then choose a station')}</option>
+                    {thanas.slice().sort((a, b) => (language === 'bn' ? a.nameBn.localeCompare(b.nameBn, 'bn') : a.nameEn.localeCompare(b.nameEn))).map((th) => (
+                      <option key={th.id} value={th.id}>{language === 'bn' ? th.nameBn : th.nameEn}</option>
+                    ))}
+                  </select>
+                </div>
+                {thanaLoadError && <p role="status" className="text-amber-300 text-[11px]">{thanaLoadError}</p>}
               </div>
 
               <div>
@@ -279,6 +338,7 @@ export const AdminPolicePage: React.FC = () => {
                 />
               </div>
 
+              {formError && <p role="alert" className="text-rose-300 text-xs rounded-lg bg-rose-500/10 border border-rose-500/20 p-2">{formError}</p>}
               <div className="pt-2 flex justify-end gap-2">
                 <button
                   type="button"
@@ -289,9 +349,10 @@ export const AdminPolicePage: React.FC = () => {
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-semibold"
+                  disabled={submitting || loadingThanas || !assignedDistrictId || !assignedThanaId}
+                  className="px-5 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {language === 'bn' ? 'অ্যাকাউন্ট তৈরি করুন' : 'Create Account'}
+                  {submitting ? (language === 'bn' ? 'তৈরি হচ্ছে…' : 'Creating…') : (language === 'bn' ? 'অ্যাকাউন্ট তৈরি করুন' : 'Create Account')}
                 </button>
               </div>
             </form>
