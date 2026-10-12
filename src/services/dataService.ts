@@ -18,7 +18,7 @@ class DataService{
      fetch('/data/bd-geo/admin.json').then(r=>r.json()),
    ]);
    const stations=[...getPoliceStations(),...registryStations];
-   const district=d ? admin.districts.find((x:any)=>x.id===d) : undefined;
+   const district=d ? admin.districts.find((x:any)=>String(x.id)===String(d)) : undefined;
    if(d && !district)return [];
    const legacyIds=new Set([district?.id,district?.legacyId].filter(Boolean));
    const districtNames=new Set([district?.nameEn,district?.nameBn].filter(Boolean).map(normalizeName));
@@ -31,19 +31,19 @@ class DataService{
        const legacyDistrictName=legacyDistrict?.nameEn || legacyDistrict?.name || legacyDistrict?.nameBn || '';
        return legacyIds.has(station.districtId) || districtNames.has(normalizeName(legacyDistrictName));
      }
-     return legacyIds.has(station.districtId) || (station.source==='ADDRESS_REGISTRY' && station.districtId===district.id);
+     return legacyIds.has(String(station.districtId)) || (station.source==='ADDRESS_REGISTRY' && String(station.districtId)===String(district.id));
    });
    const seen=new Set<string>();
    return matched.filter((station:any)=>{
      const legacyId=String(station.districtId||'').replace(/^dist_/,'');
      const legacyDistrict=(geoDistricts as readonly any[]).find((item:any)=>String(item.id)===legacyId);
-     const sourceDistrict=station.sourceDistrictNameEn || admin.districts.find((x:any)=>x.id===station.districtId || x.legacyId===station.districtId)?.nameEn || legacyDistrict?.nameEn || legacyDistrict?.name || legacyDistrict?.nameBn || '';
+     const sourceDistrict=station.sourceDistrictNameEn || admin.districts.find((x:any)=>String(x.id)===String(station.districtId) || String(x.legacyId)===String(station.districtId))?.nameEn || legacyDistrict?.nameEn || legacyDistrict?.name || legacyDistrict?.nameBn || '';
      const key=`${normalizeName(station.nameEn)}|${normalizeName(sourceDistrict)}|${station.districtId||''}`;
      if(seen.has(key))return false;
      seen.add(key);
      return true;
    }).map((station:any)=>{
-     const resolvedDistrict=district || admin.districts.find((x:any)=>normalizeName(x.nameEn)===normalizeName(station.sourceDistrictNameEn||'') || x.id===station.districtId || x.legacyId===station.districtId);
+     const resolvedDistrict=district || admin.districts.find((x:any)=>normalizeName(x.nameEn)===normalizeName(station.sourceDistrictNameEn||'') || String(x.id)===String(station.districtId) || String(x.legacyId)===String(station.districtId));
      return {...station,districtId:district?.id || resolvedDistrict?.id || station.districtId || '',upazilaId:undefined};
    });
  }
