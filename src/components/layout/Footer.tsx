@@ -30,7 +30,7 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div className="md:col-span-2">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-emerald-50 border border-emerald-200 flex items-center justify-center text-[#006a4e]"><Shield className="w-5 h-5" /></div>
+              <img src="/logo.svg" alt="Nesha Report BD logo" className="w-10 h-10 object-contain flex-shrink-0" />
               <div><div className="font-bold text-slate-900">{t('brandName')}</div><div className="text-xs text-slate-500">{language === 'bn' ? 'গোপনীয় নাগরিক রিপোর্টিং সেবা' : 'Confidential citizen reporting service'}</div></div>
             </div>
             <p className="mt-4 text-sm text-slate-500 leading-relaxed max-w-xl">{language === 'bn' ? 'নাগরিকদের কাছ থেকে মাদক-সংক্রান্ত সন্দেহজনক ঘটনার তথ্য গ্রহণ ও সংশ্লিষ্ট আইন প্রয়োগকারী কর্মকর্তার কাছে পৌঁছে দেওয়ার জন্য একটি ডিজিটাল প্ল্যাটফর্ম।' : 'A digital platform for receiving suspected narcotics incident information from citizens and routing reports to the responsible law-enforcement authority.'}</p>
