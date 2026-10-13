@@ -262,7 +262,7 @@ export const ReportPage: React.FC<ReportPageProps> = ({ onNavigate }) => {
           thanaName: language === 'bn' ? (curThana?.nameBn || '') : (curThana?.nameEn || ''),
           unionId: selectedUnionId,
           unionName: curUnion ? (language === 'bn' ? curUnion.nameBn : curUnion.nameEn) : '',
-          villageId: selectedVillageId || undefined,
+          ...(selectedVillageId ? { villageId: selectedVillageId } : {}),
           villageArea,
           roadLandmark,
         },
@@ -271,8 +271,12 @@ export const ReportPage: React.FC<ReportPageProps> = ({ onNavigate }) => {
         incidentDate,
         incidentTime,
         location: {
-          latitude: latitude ? parseFloat(latitude) : undefined,
-          longitude: longitude ? parseFloat(longitude) : undefined,
+          ...(latitude.trim() && Number.isFinite(Number(latitude))
+            ? { latitude: Number(latitude) }
+            : {}),
+          ...(longitude.trim() && Number.isFinite(Number(longitude))
+            ? { longitude: Number(longitude) }
+            : {}),
           generalArea: `${villageArea ? villageArea + ', ' : ''}${curThana?.nameBn || ''}`,
         },
         evidenceIds: [],
