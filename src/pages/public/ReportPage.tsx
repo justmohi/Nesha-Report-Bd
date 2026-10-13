@@ -286,7 +286,9 @@ export const ReportPage: React.FC<ReportPageProps> = ({ onNavigate }) => {
       const personPayload = (personName || personAlias || personDescription) ? {
         name: personName,
         alias: personAlias,
-        approximateAge: personAge ? parseInt(personAge, 10) : undefined,
+        ...(personAge.trim() && Number.isFinite(Number(personAge))
+          ? { approximateAge: parseInt(personAge, 10) }
+          : {}),
         gender: personGender === 'male' ? 'পুরুষ' : personGender === 'female' ? 'মহিলা' : 'অন্যান্য',
         description: personDescription,
         knownArea: personKnownArea,
