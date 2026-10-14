@@ -106,7 +106,7 @@ export const AdminReportsPage: React.FC<AdminReportsPageProps> = ({ onNavigate }
           {filteredReports.map((report) => (
             <div
               key={report.id}
-              onClick={() => onNavigate('police-report-detail', report.id)}
+              onClick={() => onNavigate('admin-report-detail', report.id)}
               className="p-5 rounded-2xl bg-slate-900 hover:bg-slate-800/80 border border-slate-800 transition cursor-pointer flex flex-col md:flex-row md:items-center justify-between gap-4"
             >
               <div className="space-y-2 flex-1">
