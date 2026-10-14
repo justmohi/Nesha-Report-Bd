@@ -61,11 +61,13 @@ export const PoliceReportDetailPage: React.FC<PoliceReportDetailPageProps> = ({
       setIsLoading(true);
       setError(null);
       try {
-        if (!currentUser || !policeUser?.assignedThanaId) {
+        if (!currentUser || (role !== 'SUPER_ADMIN' && !policeUser?.assignedThanaId)) {
           throw new Error('Unauthorized: active police assignment is required.');
         }
         const uid = currentUser.uid;
-        const rep = await dataService.getReportById(reportId, 'POLICE_USER', uid, policeUser.assignedThanaId);
+        const accessRole = role === 'SUPER_ADMIN' ? 'SUPER_ADMIN' : 'POLICE_USER';
+        const assignedThanaId = policeUser?.assignedThanaId;
+        const rep = await dataService.getReportById(reportId, accessRole, uid, assignedThanaId);
 
         if (!rep) {
           setError('Report not found');
@@ -80,7 +82,7 @@ export const PoliceReportDetailPage: React.FC<PoliceReportDetailPageProps> = ({
         // Fetch confidential person if exists
         if (rep.reportedPersonId) {
           try {
-            const p = await dataService.getReportedPerson(rep.reportedPersonId, 'POLICE_USER', thanaId);
+            const p = await dataService.getReportedPerson(rep.reportedPersonId, accessRole, assignedThanaId);
             setReportedPerson(p);
           } catch (e) {
             console.warn('Could not load reported person', e);
@@ -89,7 +91,7 @@ export const PoliceReportDetailPage: React.FC<PoliceReportDetailPageProps> = ({
 
         // Fetch evidence
         try {
-          const ev = await dataService.getEvidenceForReport(rep.id, 'POLICE_USER', uid, policeUser.assignedThanaId);
+          const ev = await dataService.getEvidenceForReport(rep.id, accessRole, uid, assignedThanaId);
           setEvidenceList(ev);
         } catch (e) {
           console.warn('Could not load evidence', e);
@@ -104,7 +106,7 @@ export const PoliceReportDetailPage: React.FC<PoliceReportDetailPageProps> = ({
   }, [reportId, thanaId, currentUser, policeUser]);
 
   const handleUpdateStatusAndNotes = async (statusToSet: ReportStatus) => {
-    if (!report || !policeUser) return;
+    if (!report || !policeUser || role === 'SUPER_ADMIN') return;
     setIsSaving(true);
     setSaveSuccess(false);
 
