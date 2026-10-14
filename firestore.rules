@@ -114,7 +114,9 @@ service cloud.firestore {
         incoming().reporterId == request.auth.uid &&
         incoming().status == 'SUBMITTED' &&
         incoming().keys().hasAll(['reportId', 'reporterId', 'incidentType', 'description', 'jurisdiction', 'assignedThanaId', 'status', 'createdAt']) &&
-        incoming().reportId == reportId &&
+        incoming().reportId is string &&
+        incoming().reportId.size() >= 10 &&
+        incoming().reportId.size() <= 40 &&
         incoming().jurisdiction.thanaId == incoming().assignedThanaId &&
         incoming().jurisdiction.districtId is string &&
         incoming().jurisdiction.upazilaId is string &&
