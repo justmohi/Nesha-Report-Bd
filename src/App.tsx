@@ -151,6 +151,20 @@ function AppContent() {
         );
 
       // Super Admin Routes (Protected)
+      case 'admin-report-detail':
+        return (
+          <RoleGuard
+            allowedRoles={['SUPER_ADMIN']}
+            onBack={() => navigate('admin-reports')}
+            onNavigateLogin={() => navigate('login')}
+          >
+            {selectedReportId ? (
+              <PoliceReportDetailPage reportId={selectedReportId} onNavigate={navigate} />
+            ) : (
+              <AdminReportsPage onNavigate={navigate} />
+            )}
+          </RoleGuard>
+        );
       case 'admin-dashboard':
         return (
           <RoleGuard
